@@ -14,6 +14,7 @@ async def create_game(ctx):
     if game == None and ctx.message.server:
         await bot.say("%s created a game! Join using >join and observe with >observe" %(ctx.message.author.mention))
         game = Game(bot, ctx.message.server)
+        await game.start()
     elif game != None:
         await bot.say("A game already exists.")
     elif not ctx.message.server:
@@ -29,26 +30,32 @@ async def stop(ctx):
 @bot.command(description="Join the game", pass_context=True)
 async def join(ctx):
     if game:
-        game.add_player(ctx.message.author)
+        code = await game.add_player(ctx.message.author)
+        print(code)
+
+@bot.command(description="Observe the game", pass_context=True)
+async def observe(ctx):
+    if game:
+        code = await game.add_observer(ctx.message.author)
+        print(code)
 
 @bot.command(description="Leave the game", pass_context=True)
 async def leave(ctx):
     if game:
-        game.remove_player(ctx.message.author)
+        await game.remove_player(ctx.message.author)
 
 @bot.command(description="Get a list of locations at reach", pass_context=True)
 async def locations(ctx):
     if game:
         if game.game_state == game.STATE_GAME:
-            bot.say("".join(game.locations))
+            await bot.say(", ".join(game.locations))
 
 @bot.command(description="Move to another location", pass_context=True)
-async def move(ctx):
+async def move(ctx, location : str):
     if game:
         if game.game_state == game.STATE_GAME:
-            if ctx.subcommand_passed:
-                if game.locations.has_key(ctx.subcommand_passed):
-                    await game.locations[ctx.subcommand_passed].player_enter(game.find_by_user(ctx.message.author))
+            if location in game.locations:
+                await game.locations[location].player_enter(game.find_by_user(ctx.message.author))
 
 if __name__ == "__main__":
     bot.run(token)
