@@ -20,7 +20,9 @@ class Game():
         self.player_role = None
         self.observer_role = None
 
-        self.locations = {"1" : Location(self, name="Dev Room 1", topic="It's"), "2" : Location(self, name="Dev Room 2", topic="The"), "3" : Location(self, name="Dev Room 3", topic="Nutshack")}
+        self.locations = {"1" : Location(self, name="Dev Room 1", topic="It's", description="A dev room... Spooky!"),
+                          "2" : Location(self, name="Dev Room 2", topic="The", description="This room, ah yes... This room. It makes you feel relaxed"),
+                          "3" : Location(self, name="Dev Room 3", topic="Nutshack", description="This room is quite boring... There's nothing special here.")}
 
         self.channel = None
 
@@ -113,16 +115,29 @@ class Player():
     def __init__(self, game, user, is_observer=False):
         self.game = game
         self.user = user
+        self.name = self.user.name
         self.member = self.game.server.get_member(self.user.id)
+        if self.member.nick:
+            self.name = self.member.nick
         self.location = None
         self.is_observer = is_observer
+        self.is_bloody = False
+
+    def examine(self):
+        '''Returns a single-line string.'''
+        examined = "%s doesn't seem injured."%self.name
+        if self.is_bloody:
+            examined += " %s's clothes are blood-stained!"%self.name
+        return examined
 
 class Location():
-    def __init__(self, game, name, topic=""):
+    def __init__(self, game, name, topic="", description=""):
         self.game = game
         self.name = name.replace(" ", "_")
         self.role = None
         self.topic = topic
+
+        self.description = description
 
         self.players = []
 
@@ -162,6 +177,12 @@ class Location():
     async def delete(self):
         await self.game.bot.delete_channel(self.channel)
         await self.game.bot.delete_role(self.game.server, self.role)
+
+    def examine(self):
+        examined = self.description +"\n"
+        for player in self.players:
+            examined += "%s is in the room. %s \n"%(player.name, player.examine())
+        return examined
 
     def bot(self):
         return self.game.bot

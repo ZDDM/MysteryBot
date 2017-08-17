@@ -58,6 +58,8 @@ async def locations(ctx):
             em = discord.Embed(title="Adjacent locations", description=locstr, colour=0x6699bb)
             em.set_footer(text="Locations you can move to right now")
             await bot.send_message(ctx.message.channel, embed=em)
+        else:
+            await bot.say("You can't do that now, %s!"%ctx.message.author.mention)
 
 @bot.command(description="Move to another location", pass_context=True)
 async def move(ctx, location : str):
@@ -65,6 +67,24 @@ async def move(ctx, location : str):
         if game.game_state == game.STATE_GAME:
             if location in game.locations:
                 await game.locations[location].player_enter(game.find_by_user(ctx.message.author))
+        else:
+            await bot.say("You can't do that now, %s!"%ctx.message.author.mention)
+
+@bot.command(description="Examine the room you're in.", pass_context=True)
+async def examine(ctx):
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            if player:
+                if not player.is_observer:
+                    await bot.send_message(player.location.channel, "%s takes a look around..." %(player.name))
+                    em = discord.Embed(title="%s"%player.location.name, description=player.location.examine(), colour=0x6699bb)
+                    em.set_footer(text=player.location.topic)
+                    await bot.send_message(player.user, embed=em)
+                    return
+            await bot.say("You're not a player!")
+        await bot.say("You can't do that now, %s!"%ctx.message.author.mention)
+
 
 if __name__ == "__main__":
     bot.run(token)
