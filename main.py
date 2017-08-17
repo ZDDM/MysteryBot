@@ -66,7 +66,13 @@ async def move(ctx, location : str):
     if game:
         if game.game_state == game.STATE_GAME:
             if location in game.locations:
-                await game.locations[location].player_enter(game.find_by_user(ctx.message.author))
+                player = game.find_by_user(ctx.message.author)
+                if not player.move_cooldown:
+                    await game.locations[location].player_enter(player)
+                    player.move_cooldown = True
+                    await asyncio.sleep(3)
+                else:
+                    await bot.say("Can't move yet!")
         else:
             await bot.say("You can't do that now, %s!"%ctx.message.author.mention)
 
