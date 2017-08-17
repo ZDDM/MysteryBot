@@ -4,6 +4,7 @@ import asyncio
 class Game():
 
     # Game states.
+    STATE_PREPARE = -1
     STATE_LOBBY = 0
     STATE_GAME = 1
     STATE_END = 2
@@ -14,7 +15,7 @@ class Game():
 
         print(bot, server)
 
-        self.game_state = self.STATE_LOBBY
+        self.game_state = self.STATE_PREPARE
         self.players = []
         self.observers = []
 
@@ -25,11 +26,9 @@ class Game():
 
         self.channel = None
 
-    async def start(self):
+    async def prepare(self):
         self.player_role = await self.bot.create_role(self.server, name="Mystery Player")
         self.observer_role = await self.bot.create_role(self.server, name="Mystery Observer")
-
-        print(self.player_role, self.observer_role)
 
         everyone_perm = discord.ChannelPermissions(target=self.server.default_role, overwrite=discord.PermissionOverwrite(read_messages=False, send_messages=False))
         player_perm = discord.ChannelPermissions(target=self.player_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=True))
@@ -37,13 +36,14 @@ class Game():
 
         self.channel = await self.bot.create_channel(self.server, "mystery_lobby", everyone_perm, player_perm, observer_perm)
 
-        print(self.channel)
-
         await self.bot.edit_channel(self.channel, topic="Mystery game lobby.")
+
+        self.game_state = self.STATE_LOBBY
 
         for location in self.locations.values():
             await location.start()
 
+    async def start(self):
         await self.bot.send_message(self.channel, "Game will start in 45 seconds. (BUT ACTUALLY 15 FOR DEBUG HEEEHEEEHEEE)")
         await asyncio.sleep(15)
         self.game_state = self.STATE_GAME
@@ -52,6 +52,7 @@ class Game():
         await asyncio.sleep(5)
         await self.bot.edit_channel(self.channel, topic="Mystery game lobby. The game has already started! You can discuss it here.")
         await self.bot.edit_channel_permissions(self.channel, target=self.player_role, overwrite=discord.PermissionOverwrite(read_messages=False, send_messages=False))
+        await self.bot.edit_channel_permissions(self.channel, target=self.observer_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=True))
         for player in self.players:
             await list(self.locations.values())[0].player_enter(player)
 
@@ -59,7 +60,7 @@ class Game():
         await self.bot.delete_role(self.server, self.player_role)
         await self.bot.delete_role(self.server, self.observer_role)
         await self.bot.delete_channel(self.channel)
-        for location in self.locations:
+        for location in list(self.locations.values()):
             await location.delete()
 
     async def add_player(self, user):
@@ -68,7 +69,7 @@ class Game():
             if not (player in self.players):
                 self.players.append(Player(self, user))
                 await self.bot.add_roles(self.server.get_member(user.id), self.player_role)
-                await self.bot.send_message(self.channel, "%s joins the game!" % (user.name))
+                await self.bot.send_message(self.channel, "%s joins the game!" % (user.mention))
                 return True
         return False
 
@@ -79,16 +80,17 @@ class Game():
                 if not player.is_observer and player in self.players:
                     self.players.remove(player)
                     await self.bot.remove_roles(player.member, self.player_role)
-                    await self.bot.send_message(self.channel, "%s leaves the game..." % (user.name))
+                    await self.bot.send_message(self.channel, "%s leaves the game..." % (user.mention))
                     return True
         return False
 
     async def add_observer(self, user):
-        player = self.find_by_user(user)
-        if not player:
-            self.observers.append(Player(self, user, True))
-            await self.bot.add_roles(self.server.get_member(user.id), self.observer_role)
-            return True
+        if self.game_state != self.STATE_PREPARE:
+            player = self.find_by_user(user)
+            if not player:
+                self.observers.append(Player(self, user, True))
+                await self.bot.add_roles(self.server.get_member(user.id), self.observer_role)
+                return True
         return False
 
     async def remove_observer(self, user):
@@ -144,7 +146,7 @@ class Location():
             return False
         if not (player in self.players):
             await self.game.bot.add_roles(player.member, self.role)
-            await self.game.bot.send_message(self.channel, "%s enters." %(player.user.name))
+            await self.game.bot.send_message(self.channel, "%s enters." %(player.user.mention))
             if player.location:
                 await player.location.player_leave(player)
             player.location = self
@@ -153,8 +155,8 @@ class Location():
 
     async def player_leave(self, player):
         if player in self.players:
+            await self.game.bot.send_message(self.channel, "%s leaves." %(player.user.mention))
             await self.game.bot.remove_roles(player.member, self.role)
-            await self.game.bot.send_message(self.channel, "%s leaves." %(player.user.name))
             if player.location == self:
                 player.location = None
             self.players.remove(player)

@@ -12,8 +12,11 @@ bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), description=d
 async def create_game(ctx):
     global game
     if game == None and ctx.message.server:
-        await bot.say("%s created a game! Join using >join and observe with >observe" %(ctx.message.author.mention))
+        await bot.say("%s created a game! Preparing game instance..." %(ctx.message.author.mention))
         game = Game(bot, ctx.message.server)
+        await game.prepare()
+        await game.add_player(ctx.message.author)
+        await bot.say("You can join the game now using >join or observe using >observe!")
         await game.start()
     elif game != None:
         await bot.say("A game already exists.")
@@ -25,19 +28,19 @@ async def create_game(ctx):
 @bot.command(description="Stops a game instance", pass_context=True)
 async def stop(ctx):
     await bot.say("Stopping game!")
-    game.stop()
+    await game.stop()
 
 @bot.command(description="Join the game", pass_context=True)
 async def join(ctx):
     if game:
         code = await game.add_player(ctx.message.author)
-        print(code)
+        if not code:
+            await bot.say("%s couldn't join. Try again later, please."%ctx.message.author.mention)
 
 @bot.command(description="Observe the game", pass_context=True)
 async def observe(ctx):
     if game:
-        code = await game.add_observer(ctx.message.author)
-        print(code)
+        await game.add_observer(ctx.message.author)
 
 @bot.command(description="Leave the game", pass_context=True)
 async def leave(ctx):
