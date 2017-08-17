@@ -1,10 +1,11 @@
 import discord
 import asyncio
+import os
 from discord.ext import commands
 from mystery.game import Game
 
 description = """Murder everyone!"""
-token = ""
+token = os.environ["MysteryToken"]
 game = None
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), description=description)
 
