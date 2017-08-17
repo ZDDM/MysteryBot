@@ -134,24 +134,29 @@ class Player():
         self.equipped_item = None
         self.inventory = []
 
+        self.move_cooldown = False
+        self.attack_cooldown = False
+
     def add_item(self, item):
-        if item not in self.items:
+        if item not in self.inventory:
             if isinstance(item.parent, Player) or isinstance(item.parent, Location):
                 item.parent.remove_item(item)
-            self.inventory += item
+            self.inventory.append(item)
             item.parent = self
 
     def remove_item(self, item):
-        if item in self.items:
+        if item in self.inventory:
             if item.parent:
                 item.parent = None
+            self.inventory.remove(item)
 
     def find_item(self, item):
         for mitem in self.inventory:
-            if mitem.name == item:
+            print(mitem.name, item)
+            if mitem._name.lower() == item.lower():
                 return mitem
         return False
-
+        
     def examine(self):
         '''Returns a single-line string.'''
         examined = "%s doesn't seem injured.\n"%self.name
@@ -167,7 +172,7 @@ class Item():
         self.parent = None
 
     def name(self):
-        if is_bloody:
+        if self.is_bloody:
             return "**blood-stained** __%s__"%(self._name)
         else:
             return "__%s__"%(self._name)
@@ -181,24 +186,64 @@ class Item():
             self.parent.location.add_item(self)
 
     def examine(self):
-        if name[0] in ("a", "e", "i", "o", "u") and not is_bloody:
+        if self._name[0] in ("a", "e", "i", "o", "u") or self.is_bloody:
             if isinstance(self.parent, Player):
                 return "This is an %s! "%(self.name().lower()) + self.description
-            else:
-                return "There is an %s! "%(self.name().lower())
+            elif isinstance(self.parent, Location):
+                return "There is an %s on the ground! "%(self.name().lower())
+            elif isinstance(self.parent, Furniture):
+                return "There is an %s inside the %s! "%(self.name().lower(), self.parent.name.lower())
         else:
             if isinstance(self.parent, Player):
                 return "This is a %s! "%(self.name().lower()) + self.description
-            else:
-                return "There is a %s! "%(self.name().lower())
+            elif isinstance(self.parent, Location):
+                return "There is a %s on the ground! "%(self.name().lower())
+            elif isinstance(self.parent, Furniture):
+                return "There is a %s inside the %s! "%(self.name().lower(), self.parent.name.lower())
+        return "Something went wrong, probably... I'm %s"%self.name()
 
 class Usable(Item):
     async def use(self):
         pass
 
 class Weapon(Usable):
-    def __init__(self):
-        pass
+    pass
+
+class Furniture():
+    def __init__(self, name="", description=""):
+        self.parent = None
+        self.contents = []
+        self.name = name
+
+    def examine(self):
+        if self.name[0] in ("a", "e", "i", "o", "u"):
+            return "There is an %s! "%(self.name.lower())
+        else:
+            return "There is a %s! "%(self.name.lower())
+
+    def examine_contents(self):
+        contentstr = ""
+        for content in self.contents:
+            contentstr += "%s \n"%(content.examine())
+        return contentstr
+
+    def add_item(self, item):
+        if item not in self.items:
+            if isinstance(item.parent, Player) or isinstance(item.parent, Location):
+                item.parent.remove_item(item)
+            self.contents.append(item)
+            item.parent = self
+
+    def remove_item(self, item):
+        if item in self.contents:
+            if item.parent:
+                item.parent = None
+
+    def find_item(self, item):
+        for mitem in self.contents:
+            if mitem._name.lower() == item.lower():
+                return mitem
+        return False
 
 class Location():
     def __init__(self, game, name, topic="", description=""):
@@ -211,9 +256,12 @@ class Location():
 
         self.players = [] # Players in this location.
         self.items = [] # Items in this location.
+        self.furniture = [] # Furniture in this location
 
         self.channel = None
         # self.on_message = self.game.bot.event(self.on_message)
+
+        self.add_item(Weapon("knife", "DEADLY"))
 
     async def start(self):
         self.role = await self.game.bot.create_role(self.game.server, name="Location")
@@ -227,20 +275,41 @@ class Location():
 
     def add_item(self, item):
         if item not in self.items:
-            if isinstance(item.parent, Player) or isinstance(item.parent, Location):
+            if isinstance(item.parent, Player) or isinstance(item.parent, Location) or isinstance(item.parent, Furniture):
                 item.parent.remove_item(item)
-            self.items += item
+            self.items.append(item)
             item.parent = self
 
     def remove_item(self, item):
         if item in self.items:
             if item.parent:
                 item.parent = None
+            self.items.remove(item)
 
     def find_item(self, item):
         for mitem in self.items:
-            if mitem.name == item:
+            print(mitem.name, item)
+            if mitem._name.lower() == item.lower():
                 return mitem
+        return False
+
+    def add_furniture(self, furniture):
+        if furniture not in self.furniture:
+            if isinstance(item.parent, Location):
+                item.parent.remove_furniture(item)
+            self.furniture.append(furniture)
+            furniture.parent = self
+
+    def remove_furniture(self, furniture):
+        if furniture in self.furniture:
+            if furniture.parent:
+                furniture.parent = None
+                self.furniture.remove(furniture)
+
+    def find_furniture(self, furniture):
+        for mfurniture in self.furniture:
+            if mfurniture.name == furniture:
+                return mfurniture
         return False
 
     async def player_enter(self, player):
@@ -272,8 +341,14 @@ class Location():
         for player in self.players:
             examined += "%s is in the room. %s \n"%(player.name, player.examine())
         examined += "\n"
+
+        for furniture in self.furniture:
+            examined += furniture.examine()
+
+        examined += "\n"
+
         for item in self.items:
-            examined += ""
+            examined += item.examine()
         return examined
 
     # async def on_message(self, message):
