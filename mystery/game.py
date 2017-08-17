@@ -111,6 +111,15 @@ class Game():
                 return item
         return False
 
+    def find_by_member(self, member):
+        for item in self.players:
+            if item.member == member:
+                return item
+        for item in self.observers:
+            if item.member == member:
+                return item
+        return False
+
 class Player():
     def __init__(self, game, user, is_observer=False):
         self.game = game
@@ -122,13 +131,74 @@ class Player():
         self.location = None
         self.is_observer = is_observer
         self.is_bloody = False
+        self.equipped_item = None
+        self.inventory = []
+
+    def add_item(self, item):
+        if item not in self.items:
+            if isinstance(item.parent, Player) or isinstance(item.parent, Location):
+                item.parent.remove_item(item)
+            self.inventory += item
+            item.parent = self
+
+    def remove_item(self, item):
+        if item in self.items:
+            if item.parent:
+                item.parent = None
+
+    def find_item(self, item):
+        for mitem in self.inventory:
+            if mitem.name == item:
+                return mitem
+        return False
 
     def examine(self):
         '''Returns a single-line string.'''
-        examined = "%s doesn't seem injured."%self.name
+        examined = "%s doesn't seem injured.\n"%self.name
         if self.is_bloody:
-            examined += " %s's clothes are blood-stained!"%self.name
+            examined += " %s's clothes are **blood-stained**!\n"%self.name
         return examined
+
+class Item():
+    def __init__(self, name="Unknown", description="Unknown item."):
+        self._name = name
+        self.description = description
+        self.is_bloody = False
+        self.parent = None
+
+    def name(self):
+        if is_bloody:
+            return "**blood-stained** __%s__"%(self._name)
+        else:
+            return "__%s__"%(self._name)
+
+    def pickup(self, player):
+        if isinstance(player, Player):
+            player.add_item(self)
+
+    def drop(self):
+        if isinstance(self.parent, Player):
+            self.parent.location.add_item(self)
+
+    def examine(self):
+        if name[0] in ("a", "e", "i", "o", "u") and not is_bloody:
+            if isinstance(self.parent, Player):
+                return "This is an %s! "%(self.name().lower()) + self.description
+            else:
+                return "There is an %s! "%(self.name().lower())
+        else:
+            if isinstance(self.parent, Player):
+                return "This is a %s! "%(self.name().lower()) + self.description
+            else:
+                return "There is a %s! "%(self.name().lower())
+
+class Usable(Item):
+    async def use(self):
+        pass
+
+class Weapon(Usable):
+    def __init__(self):
+        pass
 
 class Location():
     def __init__(self, game, name, topic="", description=""):
@@ -139,7 +209,8 @@ class Location():
 
         self.description = description
 
-        self.players = []
+        self.players = [] # Players in this location.
+        self.items = [] # Items in this location.
 
         self.channel = None
         # self.on_message = self.game.bot.event(self.on_message)
@@ -153,6 +224,24 @@ class Location():
 
         self.channel = await self.game.bot.create_channel(self.game.server, "mystery_%s"%self.name, everyone_perm, role_perm, observer_perm)
         await self.game.bot.edit_channel(self.channel, topic=self.topic)
+
+    def add_item(self, item):
+        if item not in self.items:
+            if isinstance(item.parent, Player) or isinstance(item.parent, Location):
+                item.parent.remove_item(item)
+            self.items += item
+            item.parent = self
+
+    def remove_item(self, item):
+        if item in self.items:
+            if item.parent:
+                item.parent = None
+
+    def find_item(self, item):
+        for mitem in self.items:
+            if mitem.name == item:
+                return mitem
+        return False
 
     async def player_enter(self, player):
         if player.is_observer:
@@ -179,9 +268,12 @@ class Location():
         await self.game.bot.delete_role(self.game.server, self.role)
 
     def examine(self):
-        examined = self.description +"\n"
+        examined = self.description + "\n"
         for player in self.players:
             examined += "%s is in the room. %s \n"%(player.name, player.examine())
+        examined += "\n"
+        for item in self.items:
+            examined += ""
         return examined
 
     def bot(self):

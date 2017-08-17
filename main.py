@@ -85,6 +85,64 @@ async def look(ctx):
             await bot.say("You're not a player!")
         await bot.say("You can't do that now, %s!"%ctx.message.author.mention)
 
+@bot.command(description="Use the item you've equipped. If it's a weapon, you can commit suicide by using it.", pass_context=True)
+async def use(ctx):
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            if player:
+                if not player.is_observer:
+                    if player.equipped_item:
+                        if hasattr(player.equipped_item, "use"):
+                            await player.equipped_item.use()
+                        else:
+                            await bot.send_message(player.user, "You can't use that!")
+
+@bot.command(description="Sends you a private message with the contents of your inventory.", pass_context=True)
+async def inventory(ctx):
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            if player:
+                if not player.is_observer:
+                    if len(player.inventory):
+                        invcont = ""
+                        for item in player.inventory:
+                            invcont += "%s \n"%(item._name)
+                        em = discord.Embed(title="Inventory", description=invcont, colour=0x6699bb)
+                        await bot.send_message(player.user, embed=em)
+
+@bot.command(description="Picks up an item from the location you're in.", pass_context=True)
+async def pickup(ctx, item : str):
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            if player:
+                if not player.is_observer:
+                    fitem = player.location.find_item(item)
+                    if fitem:
+                        fitem.pickup(player)
+                        await bot.say("%s picks up the %s!"%(player.user.mention, fitem.name()))
+                    else:
+                        await bot.say("There's no such item in here.")
+
+@bot.command(description="Drops an item to the location you're in.", pass_context=True)
+async def drop(ctx, item : str):
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            if player:
+                if not player.is_observer:
+                    fitem = player.find_item(item)
+                    if fitem:
+                        fitem.drop()
+                        await bot.say("%s drops the %s!"%(player.user.mention, fitem.name()))
+                    else:
+                        await bot.say("There's no such item in your inventory.")
+
+@bot.command(description="Attacks another person in your location. If you don't have a weapon equipped, you'll attack them with your fists!", pass_context=True)
+async def attack(ctx, who : discord.Member):
+    pass
 
 if __name__ == "__main__":
     bot.run(token)
