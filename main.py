@@ -51,7 +51,12 @@ async def leave(ctx):
 async def locations(ctx):
     if game:
         if game.game_state == game.STATE_GAME:
-            await bot.say(", ".join(game.locations))
+            locstr = ""
+            for name, location in game.locations.items():
+                locstr += "%s: %s\n"%(name, location.topic)
+            em = discord.Embed(title="Adjacent locations", description=locstr, colour=0x6699bb)
+            em.set_footer(text="Locations you can move to right now")
+            await bot.send_message(ctx.message.channel, embed=em)
 
 @bot.command(description="Move to another location", pass_context=True)
 async def move(ctx, location : str):
