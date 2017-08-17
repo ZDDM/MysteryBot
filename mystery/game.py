@@ -276,9 +276,6 @@ class Location():
             examined += ""
         return examined
 
-    def bot(self):
-        return self.game.bot
-
     # async def on_message(self, message):
     #     if message.channel == self.channel:
     #         await self.game.bot.process_commands(message)
