@@ -13,8 +13,6 @@ class Game():
         self.bot = bot
         self.server = server
 
-        print(bot, server)
-
         self.game_state = self.STATE_PREPARE
         self.players = []
         self.observers = []
@@ -49,7 +47,7 @@ class Game():
         self.game_state = self.STATE_GAME
         await self.bot.send_message(self.channel, "The game has started! @everyone")
         await self.bot.edit_channel(self.channel, topic="Mystery game lobby. The game has already started!")
-        await asyncio.sleep(5)
+        await asyncio.sleep(2)
         await self.bot.edit_channel(self.channel, topic="Mystery game lobby. The game has already started! You can discuss it here.")
         await self.bot.edit_channel_permissions(self.channel, target=self.player_role, overwrite=discord.PermissionOverwrite(read_messages=False, send_messages=False))
         await self.bot.edit_channel_permissions(self.channel, target=self.observer_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=True))
