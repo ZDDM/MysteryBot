@@ -70,8 +70,8 @@ async def move(ctx, location : str):
         else:
             await bot.say("You can't do that now, %s!"%ctx.message.author.mention)
 
-@bot.command(description="Examine the room you're in.", pass_context=True)
-async def examine(ctx):
+@bot.command(description="Examines the room you're in.", pass_context=True)
+async def look(ctx):
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
