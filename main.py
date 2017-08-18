@@ -71,6 +71,7 @@ async def move(ctx, location : str):
                     await game.locations[location].player_enter(player)
                     player.move_cooldown = True
                     await asyncio.sleep(3)
+                    player.move_cooldown = False
                 else:
                     await bot.say("Can't move yet!")
         else:
