@@ -11,21 +11,24 @@ game = None
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), description=description)
 
 @bot.command(description="Creates a game instance", pass_context=True)
-async def create_game(ctx):
-    global game
-    if game == None and ctx.message.server:
-        await bot.say("%s created a game! Preparing game instance..." %(ctx.message.author.mention))
-        game = Game(bot, ctx.message.server)
-        await game.prepare()
-        await game.add_player(ctx.message.author)
-        await bot.say("You can join the game now using >join or observe using >observe!")
-        await game.start()
-    elif game != None:
-        await bot.say("A game already exists.")
-    elif not ctx.message.server:
-        await bot.say("You must create the game in a server, silly!")
+async def create_game(ctx, timer : int):
+    if timer >= 15:
+        global game
+        if game == None and ctx.message.server:
+            await bot.say("%s created a game! Preparing game instance..." %(ctx.message.author.mention))
+            game = Game(bot, ctx.message.server)
+            await game.prepare()
+            await game.add_player(ctx.message.author)
+            await bot.say("You can join the game now using >join or observe using >observe!")
+            await game.start(timer)
+        elif game != None:
+            await bot.say("A game already exists.")
+        elif not ctx.message.server:
+            await bot.say("You must create the game in a server, silly!")
+        else:
+            await bot.say("Unknown error...")
     else:
-        await bot.say("Unknown error...")
+        await bot.say("That's too low! Try setting the timer to be higher than 15 seconds")
 
 @bot.command(description="Stops a game instance", pass_context=True)
 async def stop(ctx):

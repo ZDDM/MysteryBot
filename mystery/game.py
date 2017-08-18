@@ -47,9 +47,9 @@ class Game():
         for location in self.locations.values():
             await location.start()
 
-    async def start(self):
-        await self.bot.send_message(self.channel, "Game will start in 45 seconds. (BUT ACTUALLY 15 FOR DEBUG HEEEHEEEHEEE)")
-        await asyncio.sleep(15)
+    async def start(self, timer):
+        await self.bot.send_message(self.channel, "The game will start in %s seconds."%(timer))
+        await asyncio.sleep(timer)
         self.game_state = self.STATE_GAME
         await self.bot.send_message(self.channel, "The game has started! @everyone")
         await self.bot.edit_channel(self.channel, topic="Mystery game lobby. The game has already started!")
