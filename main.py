@@ -1,5 +1,6 @@
 import discord
 import asyncio
+import random
 import os
 from discord.ext import commands
 from mystery.game import Game
@@ -67,13 +68,14 @@ async def move(ctx, location : str):
         if game.game_state == game.STATE_GAME:
             if location in game.locations:
                 player = game.find_by_user(ctx.message.author)
-                if not player.move_cooldown:
-                    await game.locations[location].player_enter(player)
-                    player.move_cooldown = True
-                    await asyncio.sleep(3)
-                    player.move_cooldown = False
-                else:
-                    await bot.say("Can't move yet!")
+                if not player.is_observer and not player.is_dead:
+                    if not player.move_cooldown:
+                        await game.locations[location].player_enter(player)
+                        player.move_cooldown = True
+                        await asyncio.sleep(3)
+                        player.move_cooldown = False
+                    else:
+                        await bot.say("%s gasps for air!"%(player.name))
         else:
             await bot.say("You can't do that now, %s!"%ctx.message.author.mention)
 
@@ -83,14 +85,12 @@ async def look(ctx):
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
             if player:
-                if not player.is_observer:
+                if not player.is_observer and not player.is_dead:
                     await bot.send_message(player.location.channel, "%s takes a look around..." %(player.name))
                     em = discord.Embed(title="%s"%player.location.name, description=player.location.examine(), colour=0x6699bb)
                     em.set_footer(text=player.location.topic)
                     await bot.send_message(player.user, embed=em)
                     return
-            await bot.say("You're not a player!")
-        await bot.say("You can't do that now, %s!"%ctx.message.author.mention)
 
 @bot.command(description="Use the item you've equipped. If it's a weapon, you can commit suicide by using it.", pass_context=True)
 async def use(ctx):
@@ -98,7 +98,7 @@ async def use(ctx):
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
             if player:
-                if not player.is_observer:
+                if not player.is_observer and not player.is_dead:
                     if player.equipped_item:
                         if hasattr(player.equipped_item, "use"):
                             await player.equipped_item.use()
@@ -111,7 +111,7 @@ async def inventory(ctx):
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
             if player:
-                if not player.is_observer:
+                if not player.is_observer and not player.is_dead:
                     if len(player.inventory):
                         invcont = ""
                         for item in player.inventory:
@@ -125,7 +125,7 @@ async def pickup(ctx, item : str):
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
             if player:
-                if not player.is_observer:
+                if not player.is_observer and not player.is_dead:
                     fitem = player.location.find_item(item)
                     if fitem:
                         fitem.pickup(player)
@@ -139,7 +139,7 @@ async def drop(ctx, item : str):
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
             if player:
-                if not player.is_observer:
+                if not player.is_observer and not player.is_dead:
                     fitem = player.find_item(item)
                     if fitem:
                         fitem.drop()
@@ -147,9 +147,62 @@ async def drop(ctx, item : str):
                     else:
                         await bot.say("There's no such item in your inventory.")
 
+@bot.command(description="Equips an item from your inventory.", pass_context=True)
+async def equip(ctx, item : str):
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            if player:
+                if not player.is_observer and not player.is_dead:
+                    fitem = player.find_item(item)
+                    if fitem:
+                        code = player.equip(fitem)
+                        if code:
+                            await bot.say("%s takes out %s %s from their inventory and holds it in their hands."%(player.name, fitem.indef_article(), fitem.name()))
+                        else:
+                            await bot.say("%s wonders where they put their %s... Until they realize it was in their hands all along. How dumb." %(player.name, fitem.name()))
+                    else:
+                        await bot.say("There's no such item in your inventory.")
+
 @bot.command(description="Attacks another person in your location. If you don't have a weapon equipped, you'll attack them with your fists!", pass_context=True)
 async def attack(ctx, who : discord.Member):
-    pass
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            other = game.find_by_member(who)
+            if player and other:
+                if not ((player.is_observer or player.is_dead) or (other.is_observer or other.is_dead)):
+                    code = await player.attack(other)
+                    if code == player.ATTACK_COOLDOWN:
+                        await bot.say("%s gasps for air!" %(player.name))
+                    elif code == player.ATTACK_FAIL:
+                        await bot.say("%s evades %s's attack!"%(other.name, player.name))
+                    elif code == player.ATTACK_SUCCESS:
+                        if player.equipped_a_weapon():
+                            await bot.say("%s attacks %s with %s %s!"%(player.name, other.name, player.equipped_item.indef_article(), player.equipped_item.name()))
+                        else:
+                            await bot.say("%s punches %s!"%(player.name, other.name))
+                    elif code == player.ATTACK_CRITICAL:
+                        if player.equipped_a_weapon():
+                            await bot.say("%s BEATS %s with %s %s!"%(player.name, other.name, player.equipped_item.indef_article(), player.equipped_item.name()))
+                        else:
+                            await bot.say("%s punches %s IN THE FACE!"%(player.name, other.name))
+                    elif code == player.ATTACK_LETHAL:
+                        if player.equipped_a_weapon():
+                            await bot.say("%s deals the final blow to %s with the %s!"%(player.name, other.name, player.equipped_item.name()))
+                        else:
+                            await bot.say("%s delivers a deadly blow to %s's nose!"%(player.name, other.name))
+                        await other.die(player)
+                    if not code == player.ATTACK_COOLDOWN:
+                        player.attack_cooldown = True
+                        other.attack_cooldown = True
+                        player.move_cooldown = True
+                        other.move_cooldown = True
+                        await asyncio.sleep(random.randint(1, 3))
+                        player.attack_cooldown = False
+                        other.attack_cooldown = False
+                        player.move_cooldown = False
+                        other.move_cooldown = False
 
 if __name__ == "__main__":
     bot.run(token)
