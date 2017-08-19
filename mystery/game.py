@@ -453,9 +453,11 @@ class Furniture():
         return False
 
 class Location():
-    def __init__(self, game, name, topic="", description="", items=[], random_items=[], cooldown=3):
-        '''items uses object instances.
-           random_content uses a tuple including an item instance and a chance (from 0.0 to 1.0)'''
+    def __init__(self, game, name, topic="", description="", items=[], random_items=[], furniture=[], random_furniture=[], cooldown=3):
+        '''items uses item instances.
+           random_content uses a tuple including an item instance and a chance (from 0.0 to 1.0)
+           furniture uses furniture instances
+           random_furniture uses a tuple including a furniture instance and a chance (from 0.0 to 1.0)'''
         self.game = game
         self.name = name.replace(" ", "_")
         self.role = None
@@ -479,6 +481,14 @@ class Location():
 
         for item in items:
             self.add_item(item)
+
+        for furniture, chance in furniture:
+            random.seed()
+            if random.random() < chance:
+                self.add_furniture(furniture)
+
+        for furniture in furniture:
+            self.add_furniture(furniture)
 
     async def start(self):
         self.role = await self.game.bot.create_role(self.game.server, name="Location")
