@@ -94,11 +94,20 @@ async def look(ctx):
             player = game.find_by_user(ctx.message.author)
             if player:
                 if not player.is_observer and not player.is_dead:
+                    examined = player.location.examine()
                     await bot.send_message(player.location.channel, "%s takes a look around..." %(player.name))
-                    em = discord.Embed(title="%s"%player.location.name, description=player.location.examine(), colour=0x6699bb)
-                    em.set_footer(text=player.location.topic)
-                    await bot.send_message(player.user, embed=em)
-                    return
+                    emloc = discord.Embed(title="%s - Location info"%player.location.name, description=examined["location"], colour=0x6699bb)
+                    emloc.set_footer(text=player.location.topic)
+                    empla = discord.Embed(title="%s - People"%player.location.name, description=examined["players"], colour=0x6699bb)
+                    empla.set_footer(text=player.location.topic)
+                    emfur = discord.Embed(title="%s - Furniture"%player.location.name, description=examined["furniture"], colour=0x6699bb)
+                    emfur.set_footer(text=player.location.topic)
+                    emitem = discord.Embed(title="%s - Items"%player.location.name, description=examined["items"], colour=0x6699bb)
+                    emitem.set_footer(text=player.location.topic)
+                    await bot.send_message(player.user, embed=emloc)
+                    await bot.send_message(player.user, embed=empla)
+                    await bot.send_message(player.user, embed=emfur)
+                    await bot.send_message(player.user, embed=emitem)
 
 @bot.command(description="Use the item you've equipped. If it's a weapon, you can commit suicide by using it.", pass_context=True)
 async def use(ctx):

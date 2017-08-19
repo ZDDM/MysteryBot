@@ -344,25 +344,25 @@ class Player():
             if self.health >= 100:
                 examined = "%s seems to be doing alright.\n"%self.name
             elif self.health > 90:
-                examined = "%s seems to be slightly hurt."%self.name
+                examined = "%s seems to be slightly hurt.\n"%self.name
             elif self.health > 70:
-                examined = "%s seems to be hurt."%self.name
+                examined = "%s seems to be hurt.\n"%self.name
             elif self.health > 50:
-                examined = "%s seems to be injured."%self.name
+                examined = "%s seems to be injured.\n"%self.name
             elif self.health > 30:
-                examined = "%s seems to be quite injured..."%self.name
+                examined = "%s seems to be quite injured...\n"%self.name
             elif self.health > 10:
-                examined = "%s seems like they need urgent medical care!"%self.name
+                examined = "%s seems like they need urgent medical care!\n"%self.name
             elif self.health >= 1:
-                examined = "%s seems like they're about to die!"%self.name
+                examined = "%s seems like they're about to die!\n"%self.name
             else:
-                examined = "%s is already..."
+                examined = "%s is already...\n"
         else:
             examined = "%s seems to be dead!\n"%self.name
         if self.is_bloody:
-            examined += " %s's clothes are **blood-stained**!\n"%self.name
+            examined += "%s's clothes are **blood-stained**!\n"%self.name
         if self.equipped_item:
-            examined += " %s is holding %s %s."%(self.name, self.equipped_item.indef_article(), self.equipped_item.name())
+            examined += "%s is holding %s %s. \n"%(self.name, self.equipped_item.indef_article(), self.equipped_item.name())
         return examined
 
 class Item():
@@ -576,21 +576,19 @@ class Location():
         await self.game.bot.delete_role(self.game.server, self.role)
 
     def examine(self):
-        examined = self.description + "\n"
+        examined = {"players" : "", "furniture" : "", "items" : "", "location" : self.description}
         for player in self.players:
-            if not player.is_dead:
-                examined += "%s is in the room. %s \n"%(player.name, player.examine())
+            if player.is_dead:
+                examined["players"] += "%s lies on the floor!\n%s"%(player.name, player.examine())
             else:
-                examined += "%s lies in the floor! %s \n"%(player.name, player.examine())
-        examined += "\n"
+                examined["players"] += "%s is in here.\n%s"%(player.name, player.examine())
 
         for furniture in self.furniture:
-            examined += furniture.examine()
-
-        examined += "\n"
+            examined["furniture"] += furniture.examine()
 
         for item in self.items:
-            examined += item.examine()
+            examined["items"] += item.examine()
+
         return examined
 
 if __name__ == "__main__":
