@@ -17,6 +17,7 @@ class Game():
         self.game_state = self.STATE_PREPARE
         self.players = []
         self.observers = []
+        self.murderers = []
 
         self.player_role = None
         self.observer_role = None
@@ -57,8 +58,26 @@ class Game():
         await self.bot.edit_channel(self.channel, topic="Mystery game lobby. The game has already started! You can discuss it here.")
         await self.bot.edit_channel_permissions(self.channel, target=self.player_role, overwrite=discord.PermissionOverwrite(read_messages=False, send_messages=False))
         await self.bot.edit_channel_permissions(self.channel, target=self.observer_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=True))
+        # murderer_number = int(len(self.players) / 3)
+        murderer_number = 1 # Only one for debug purposes
+        murderer_list = ""
+        random.seed()
+        sample = random.sample(range(len(self.players)), murderer_number)
+        for i in sample:
+            self.murderers.append(self.players[i])
+            self.players[i].role = Player.ROLE_MURDERER
+            murderer_list += self.players[i].user.mention + "\n"
+            await self.bot.send_message(self.players[i].user, "You're the **MURDERER**. Your goal is to kill all innocents without being caught.")
+
+        em = discord.Embed(title="Murderers", description=murderer_list, colour=0xff5555)
+        em.set_footer(text="Know your \"friends\"...")
+
+        for i in self.murderers:
+            await self.bot.send_message(i.user, embed=em)
+
         for player in self.players:
-            await list(self.locations.values())[0].player_enter(player)
+            random.seed()
+            await list(self.locations.values())[random.randint(0, len(self.locations) - 1)].player_enter(player)
 
     async def stop(self):
         await self.bot.delete_role(self.server, self.player_role)
@@ -125,6 +144,12 @@ class Game():
                 return item
         return False
 
+    def find_location(self, loc):
+        for location in self.locations:
+            if location.name == loc:
+                return location
+        return False
+
 class Player():
 
     ATTACK_FAIL = 0
@@ -133,10 +158,14 @@ class Player():
     ATTACK_CRITICAL = 3
     ATTACK_LETHAL = 4
 
+    ROLE_NONE = 0
+    ROLE_MURDERER = 1
+
     def __init__(self, game, user, is_observer=False):
         self.game = game
         self.user = user
         self.name = self.user.name
+        self.role = self.ROLE_NONE
         self.member = self.game.server.get_member(self.user.id)
         if self.member.nick:
             self.name = self.member.nick
