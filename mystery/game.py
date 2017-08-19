@@ -441,6 +441,8 @@ class Furniture():
 
 class Location():
     def __init__(self, game, name, topic="", description="", items=[], random_items=[], cooldown=3):
+        '''items uses object instances.
+           random_content uses a tuple including an item instance and a chance (from 0.0 to 1.0)'''
         self.game = game
         self.name = name.replace(" ", "_")
         self.role = None
