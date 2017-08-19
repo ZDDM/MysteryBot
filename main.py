@@ -11,7 +11,7 @@ game = None
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), description=description)
 
 @bot.command(description="Creates a game instance", pass_context=True)
-async def create_game(ctx, timer : int):
+async def create_game(ctx, timer : int = 45):
     if timer >= 15:
         global game
         if game == None and ctx.message.server:
@@ -232,5 +232,58 @@ async def open(ctx, furniture : str):
                         await bot.say("%s opens the %s and all its contents fall to the floor!"%(player.name, furniture.name))
                 else:
                     await bot.say("There's no such furniture in this room.")
+
+@bot.command(description="Stores an item from your inventory inside a furniture in your location.", pass_context=True)
+async def store(ctx, item : str, furniture : str):
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            furniture = player.location.find_furniture(furniture)
+            if player:
+                item = player.find_item(item)
+                if item:
+                    if furniture:
+                        if not player.is_observer and not player.is_dead:
+                            furniture.add_item(item)
+                            await bot.say("%s stores %s %s in the %s"%(player.name, item.indef_article(), item.name(), furniture.name))
+                    else:
+                        await bot.say("There's no such furniture in your location.")
+                else:
+                    await bot.say("There's no such item in your inventory.")
+
+@bot.command(description="Picks up an item from a container.", pass_context=True)
+async def pick_from(ctx, furniture : str, item : str):
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            furniture = player.location.find_furniture(furniture)
+            if player:
+                if furniture:
+                    item = furniture.find_item(item)
+                    if item:
+                        if not player.is_observer and not player.is_dead:
+                            player.add_item(item)
+                            await bot.say("%s picks up %s %s from the %s"%(player.name, item.indef_article(), item.name(), furniture.name))
+                    else:
+                        await bot.say("There's no such item in the %s."%(furniture.name))
+                else:
+                    await bot.say("There's no such furniture in your location.")
+
+@bot.command(description="Examines a furniture from your location.", pass_context=True)
+async def look_inside(ctx, furniture : str):
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            furniture = player.location.find_furniture(furniture)
+            if player:
+                if furniture:
+                    if not player.is_observer and not player.is_dead:
+                        await bot.send_message(player.location.channel, "%s takes a look inside the %s..." %(player.name, furniture.name))
+                        em = discord.Embed(title="%s's contents"%furniture.name, description=furniture.examine_contents(), colour=0x6699bb)
+                        em.set_footer(text="Furniture")
+                        await bot.send_message(player.user, embed=em)
+                else:
+                    await bot.say("There's no such furniture in your location.")
+
 if __name__ == "__main__":
     bot.run(token)
