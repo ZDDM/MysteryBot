@@ -31,7 +31,7 @@ class Game():
 
     def map_devtest(self):
 
-        channel_prefix = "dev_"
+        self.channel_prefix = "dev_"
 
         chest = Furniture(name="chest", description="A chest forged from zeros and ones.", \
                           contents=[Item(name="Useless junk", description="Totally useless..."), \
