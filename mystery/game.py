@@ -1,6 +1,7 @@
 import discord
 import asyncio
 import random
+from copy import deepcopy as copy
 
 class Game():
 
@@ -19,13 +20,24 @@ class Game():
         self.observers = []
         self.murderers = []
 
+        self.weapon_database = {"book" : Weapon(name="book", description="Bust someone's head with it! Still better than your fists", robustness=7),
+                                "branch" : Weapon(name="branch", description="A branch from a tree. Better than using your fists!", robustness=8),
+                                "knife" : Weapon(name="knife", description="A kitchen knife", robustness=10),
+                                "hatchet" : Weapon(name="Hatchet", description="A small axe.", robustness=13),
+                                "baseball bat" : Weapon(name="baseball bat", description="SMAAAAASH! Homerun!", robustness=15),
+                                "billhook" : Weapon(name="billhook", description="Traditional cutting tool", robustness=20),
+                                "toolbox" : Weapon(name="toolbox", description="Originally used for storing tools, now used for busting heads!", robustness=25),
+                                "katana" : Weapon(name="katana", description="Traditional japanese sword", robustness=30),
+                                "sword" : Weapon(name="sword", description="A beautiful long sword", robustness=30),
+                                "winchester" : Weapon(name="winchester 1894", description="A ranged rifle for \"self-defense\"...", robustness=50)}
+
         self.channel_prefix = "mystery_"
 
         self.player_role = None
         self.observer_role = None
         self.dead_role = None
 
-        self.locations = self.map_devtest()
+        self.locations = self.map_rokkenjima()
 
         self.channel = None
 
@@ -53,25 +65,25 @@ class Game():
 
         pier = Location(self, name="pier", topic="A small pier where boats come by")
         rose_garden = Location(self, name="rose_garden", topic="A beautiful rose garden")
-        tool_shed = Location(self, name="tool_shed", topic="A shed for storing various gardening tools")
-        forest1 = Location(self, name="forest1", topic="Full of trees...")
-        forest2 = Location(self, name="forest2", topic="Like, REALLY full of trees...")
-        kuwadorian = Location(self, name="kuwadorian", topic="A beautiful mansion inside the forest")
+        tool_shed = Location(self, name="tool_shed", topic="A shed for storing various gardening tools", items=[copy(self.weapon_database["hatchet"])], random_items=[(copy(self.weapon_database["billhook"]), 1/2)])
+        forest1 = Location(self, name="forest1", topic="Full of trees...", random_items=[(copy(self.weapon_database["branch"]),1/2), (copy(self.weapon_database["branch"]),1/2)])
+        forest2 = Location(self, name="forest2", topic="Like, REALLY full of trees...", random_items=[(copy(self.weapon_database["branch"]),1/2), (copy(self.weapon_database["branch"]),1/2)])
+        kuwadorian = Location(self, name="kuwadorian", topic="A beautiful mansion inside the forest", random_items=[(copy(self.weapon_database["katana"]), 1/4), (copy(self.weapon_database["sword"]), 1/4)])
         guest_house_1f = Location(self, name="guest_house_1f", topic="First floor of the guest house")
         guest_house_parlor = Location(self, name="parlor", topic="A rustical chamber with a bar for the guests")
-        guest_house_archive = Location(self, name="archive", topic="Holds a small but a wide collection of books")
+        guest_house_archive = Location(self, name="archive", topic="Holds a small but a wide collection of books", items=[copy(self.weapon_database["book"]), copy(self.weapon_database["book"])])
         guest_house_2f = Location(self, name="guest_house_2f", topic="Second floor of the guest house")
-        guest_house_bedroom = Location(self, name="guest_house_bedroom", topic="An elegant guest room with a few beds")
+        guest_house_bedroom = Location(self, name="guest_house_bedroom", topic="An elegant guest room with a few beds", items=[copy(self.weapon_database["baseball bat"])])
         mansion_entrance = Location(self, name="mansion_entrance", topic="I wonder how the mansion looks on the inside...")
         mansion_1f = Location(self, name="mansion_1f", topic="First floor of the guest house. The portrait of a beautiful witch can be seen on the wall...")
         mansion_dining_room = Location(self, name="dining_room", topic="A big but elegant dining room")
-        mansion_kitchen = Location(self, name="kitchen", topic="It looks like the kitchen from some restaurant...")
-        mansion_2f = Location(self, name="mansion_2f", topic="Second floor of the mansion")
+        mansion_kitchen = Location(self, name="kitchen", topic="It looks like the kitchen from some restaurant...", items=[copy(self.weapon_database["knife"])])
+        mansion_2f = Location(self, name="mansion_2f", topic="Second floor of the mansion", items=[copy(self.weapon_database["book"])])
         mansion_bedroom = Location(self, name="mansion_bedroom", topic="A luxurious bedroom with a large bed")
         mansion_bathroom = Location(self, name="mansion_bathroom", topic="It's just a bathroom. You can't fit through the sink, though!")
         mansion_3f = Location(self, name="mansion_3f", topic="Third and last floor of the mansion")
-        mansion_study = Location(self, name="mansion_study", topic="An apartment-sized study")
-        mansion_study_kitchen = Location(self, name="mansion_study_kitchen", topic="An ordinary kitchen")
+        mansion_study = Location(self, name="mansion_study", topic="An apartment-sized study", random_items=[(copy(self.weapon_database["winchester"]), 1/3)])
+        mansion_study_kitchen = Location(self, name="mansion_study_kitchen", topic="An ordinary kitchen", items=[copy(self.weapon_database["knife"])])
         mansion_study_bathroom = Location(self, name="mansion_study_bathroom", topic="Just a bathroom...")
 
         pier.add_adjacent_location(rose_garden)
@@ -312,8 +324,10 @@ class Player():
             self.is_bloody = True
         if random.randint(0, 1):
             player.is_bloody = True
-        if self.equipped_a_weapon() and random.randint(0, 1):
-            self.equipped_item.is_bloody = True
+        if self.equipped_a_weapon():
+            self.equipped_item.on_attack(player)
+            if random.randint(0, 1):
+                self.equipped_item.is_bloody = True
         if player.health <= 0:
             player.health = 0
             player.is_bloody = True
@@ -408,6 +422,9 @@ class Weapon(Usable):
     def __init__(self, name="Unknown", description="Unknown weapon.", is_bloody=False, robustness=15):
         super(Weapon, self).__init__(name, description, is_bloody)
         self.robustness = robustness
+
+    async def on_attack(self, other):
+        pass
 
 class Furniture():
     def __init__(self, name="", description="", contents=[], random_content=[]):

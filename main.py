@@ -104,10 +104,12 @@ async def look(ctx):
                     emfur.set_footer(text=player.location.topic)
                     emitem = discord.Embed(title="%s - Items"%player.location.name, description=examined["items"], colour=0x6699bb)
                     emitem.set_footer(text=player.location.topic)
+                    await bot.send_message(player.user, "-----------------------------------")
                     await bot.send_message(player.user, embed=emloc)
                     await bot.send_message(player.user, embed=empla)
                     await bot.send_message(player.user, embed=emfur)
                     await bot.send_message(player.user, embed=emitem)
+                    await bot.send_message(player.user, "-----------------------------------")
 
 @bot.command(description="Use the item you've equipped. If it's a weapon, you can commit suicide by using it.", pass_context=True)
 async def use(ctx):
