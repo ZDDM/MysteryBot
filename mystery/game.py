@@ -344,6 +344,8 @@ class Player():
             if item.parent:
                 item.parent = None
             self.inventory.remove(item)
+            if self.equipped_item == item:
+                self.equipped_item = None
 
     def find_item(self, item):
         for mitem in self.inventory:
