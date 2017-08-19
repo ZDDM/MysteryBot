@@ -454,7 +454,6 @@ class Location():
         self.adjacent_locations = []
 
         self.channel = None
-        # self.on_message = self.game.bot.event(self.on_message)
 
         self.add_item(Weapon("knife", "DEADLY", 20))
 
@@ -555,17 +554,6 @@ class Location():
         for item in self.items:
             examined += item.examine()
         return examined
-
-    # async def on_message(self, message):
-    #     if message.channel == self.channel:
-    #         await self.game.bot.process_commands(message)
-    #         await asyncio.sleep(20)
-    #         try:
-    #             await self.game.bot.delete_message(message)
-    #         except:
-    #             pass
-    #     else:
-    #         await self.game.bot.process_commands(message)
 
 if __name__ == "__main__":
     raise Exception("Execute main.py instead.")
