@@ -25,9 +25,22 @@ class Game():
         self.observer_role = None
         self.dead_role = None
 
-        self.locations = self.map_rokkenjima()
+        self.locations = self.map_devtest()
 
         self.channel = None
+
+    def map_devtest(self):
+
+        channel_prefix = "dev_"
+
+        devroom1 = Location(self, name="devroom1", topic="OH NO, A DEV ROOM", items=[Item(name="Tears", description="Solidified tears from a coder.", is_bloody=True)])
+        devroom2 = Location(self, name="devroom2", topic="Oh hey, it's a dev room.", items=[Weapon(name="Billhook", description="Popularized by teenage girls.", robustness=20)])
+
+        devroom1.add_adjacent_location(devroom2)
+
+        locations = [devroom1, devroom2]
+
+        return location
 
     def map_rokkenjima(self):
 
