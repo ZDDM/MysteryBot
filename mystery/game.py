@@ -40,7 +40,7 @@ class Game():
 
         locations = [devroom1, devroom2]
 
-        return location
+        return locations
 
     def map_rokkenjima(self):
 
