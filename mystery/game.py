@@ -396,12 +396,14 @@ class Furniture():
         '''contents uses object instances.
            random_content uses a tuple including an object instance and a chance (from 0.0 to 1.0)'''
         self.parent = None
-        self.contents = contents
+        self.contents = []
         self.name = name
         for item, chance in random_content:
             random.seed()
             if random.random() < chance:
-                self.contents.append(item)
+                self.add_item(item)
+        for item in contents:
+            self.add_item(item)
 
     def examine(self):
         if self.name[0] in ("a", "e", "i", "o", "u"):
