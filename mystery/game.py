@@ -348,10 +348,10 @@ class Player():
         return examined
 
 class Item():
-    def __init__(self, name="Unknown", description="Unknown item."):
+    def __init__(self, name="Unknown", description="Unknown item.", is_bloody=False):
         self._name = name
         self.description = description
-        self.is_bloody = False
+        self.is_bloody = is_bloody
         self.parent = None
 
     def name(self):
@@ -387,8 +387,8 @@ class Usable(Item):
         pass
 
 class Weapon(Usable):
-    def __init__(self, name="Unknown", description="Unknown weapon.", robustness=15):
-        super(Weapon, self).__init__(name, description)
+    def __init__(self, name="Unknown", description="Unknown weapon.", is_bloody=False, robustness=15):
+        super(Weapon, self).__init__(name, description, is_bloody)
         self.robustness = robustness
 
 class Furniture():
