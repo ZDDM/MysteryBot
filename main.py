@@ -197,15 +197,22 @@ async def attack(ctx, who : discord.Member):
                             await bot.say("%s delivers a deadly blow to %s's nose!"%(player.name, other.name))
                         await other.die(player)
                     if not code == player.ATTACK_COOLDOWN:
-                        player.attack_cooldown = True
-                        other.attack_cooldown = True
-                        player.move_cooldown = True
-                        other.move_cooldown = True
-                        await asyncio.sleep(random.randint(1, 3))
-                        player.attack_cooldown = False
-                        other.attack_cooldown = False
-                        player.move_cooldown = False
-                        other.move_cooldown = False
+                        if player.move_cooldown or other.move_cooldown:
+                            player.attack_cooldown = True
+                            other.attack_cooldown = True
+                            await asyncio.sleep(random.randint(1, 3))
+                            player.attack_cooldown = False
+                            other.attack_cooldown = False
+                        else:
+                            player.attack_cooldown = True
+                            other.attack_cooldown = True
+                            player.move_cooldown = True
+                            other.move_cooldown = True
+                            await asyncio.sleep(random.randint(1, 3))
+                            player.attack_cooldown = False
+                            other.attack_cooldown = False
+                            player.move_cooldown = False
+                            other.move_cooldown = False
 
 if __name__ == "__main__":
     bot.run(token)
