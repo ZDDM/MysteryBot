@@ -174,7 +174,7 @@ async def attack(ctx, who : discord.Member):
             player = game.find_by_user(ctx.message.author)
             other = game.find_by_member(who)
             if player and other:
-                if not ((player.is_observer or player.is_dead) or (other.is_observer or other.is_dead)):
+                if not ((player.is_observer or player.is_dead) or (other.is_observer or other.is_dead)) and (player.location == other.location):
                     code = await player.attack(other)
                     if code == player.ATTACK_COOLDOWN:
                         await bot.say("%s gasps for air!" %(player.name))
