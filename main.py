@@ -228,7 +228,7 @@ async def dump(ctx, furniture : str):
             if player:
                 if furniture:
                     if not player.is_observer and not player.is_dead:
-                        furniture.open()
+                        furniture.dump()
                         await bot.say("%s dumps the %s's contents to the floor!"%(player.name, furniture.name))
                 else:
                     await bot.say("There's no such furniture in this room.")

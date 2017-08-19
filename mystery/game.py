@@ -429,7 +429,7 @@ class Furniture():
         else:
             return "There is a %s! "%(self.name.lower())
 
-    def open(self):
+    def dump(self):
         for item in self.contents:
             self.parent.add_item(item)
 
