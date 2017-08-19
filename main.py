@@ -219,8 +219,8 @@ async def attack(ctx, who : discord.Member):
                             player.move_cooldown = False
                             other.move_cooldown = False
 
-@bot.command(description="Opens a furnite from the current location. All its contents will be dropped to the ground.", pass_context=True)
-async def open(ctx, furniture : str):
+@bot.command(description="Dumps the contents of a furniture to the floor.", pass_context=True)
+async def dump(ctx, furniture : str):
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -229,7 +229,7 @@ async def open(ctx, furniture : str):
                 if furniture:
                     if not player.is_observer and not player.is_dead:
                         furniture.open()
-                        await bot.say("%s opens the %s and all its contents fall to the floor!"%(player.name, furniture.name))
+                        await bot.say("%s dumps the %s's contents to the floor!"%(player.name, furniture.name))
                 else:
                     await bot.say("There's no such furniture in this room.")
 
