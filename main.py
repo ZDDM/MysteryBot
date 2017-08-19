@@ -229,8 +229,8 @@ async def open(ctx, furniture : str):
                 if furniture:
                     if not player.is_observer and not player.is_dead:
                         furniture.open()
-                        bot.say("%s opens the %s and all its contents fall to the floor!"%(player.name, furniture.name))
+                        await bot.say("%s opens the %s and all its contents fall to the floor!"%(player.name, furniture.name))
                 else:
-                    bot.say("There's no such furniture in this room.")
+                    await bot.say("There's no such furniture in this room.")
 if __name__ == "__main__":
     bot.run(token)

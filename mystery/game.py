@@ -44,7 +44,7 @@ class Game():
 
     def map_rokkenjima(self):
 
-        channel_prefix = "rokkenjima_"
+        self.channel_prefix = "rokkenjima_"
 
         pier = Location(self, name="pier", topic="A small pier where boats come by")
         rose_garden = Location(self, name="rose_garden", topic="A beautiful rose garden")
