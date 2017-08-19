@@ -25,8 +25,6 @@ class Game():
         self.observer_role = None
         self.dead_role = None
 
-
-
         self.locations = self.map_rokkenjima()
 
         self.channel = None
@@ -394,16 +392,26 @@ class Weapon(Usable):
         self.robustness = robustness
 
 class Furniture():
-    def __init__(self, name="", description=""):
+    def __init__(self, name="", description="", contents=[], random_content=[]):
+        '''contents uses object instances.
+           random_content uses a tuple including an object instance and a chance (from 0.0 to 1.0)'''
         self.parent = None
-        self.contents = []
+        self.contents = contents
         self.name = name
+        for item, chance in random_content:
+            random.seed()
+            if random.random() < chance:
+                self.contents.append(item)
 
     def examine(self):
         if self.name[0] in ("a", "e", "i", "o", "u"):
             return "There is an %s! "%(self.name.lower())
         else:
             return "There is a %s! "%(self.name.lower())
+
+    def open(self):
+        for item in contents:
+            self.parent.add_item(item)
 
     def examine_contents(self):
         contentstr = ""
