@@ -56,9 +56,10 @@ async def leave(ctx):
 async def locations(ctx):
     if game:
         if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
             locstr = ""
-            for name, location in game.locations.items():
-                locstr += "%s: %s\n"%(name, location.topic)
+            for location in player.location.adjacent_locations:
+                locstr += "%s: %s\n"%(location.name, location.topic)
             em = discord.Embed(title="Adjacent locations", description=locstr, colour=0x6699bb)
             em.set_footer(text="Locations you can move to right now")
             await bot.send_message(ctx.message.channel, embed=em)
@@ -69,16 +70,20 @@ async def locations(ctx):
 async def move(ctx, location : str):
     if game:
         if game.game_state == game.STATE_GAME:
-            if location in game.locations:
+            location = game.find_location(location)
+            if location:
                 player = game.find_by_user(ctx.message.author)
-                if not player.is_observer and not player.is_dead:
-                    if not player.move_cooldown:
-                        await game.locations[location].player_enter(player)
-                        player.move_cooldown = True
-                        await asyncio.sleep(3)
-                        player.move_cooldown = False
+                if (not player.is_observer) and (not player.is_dead):
+                    if (location in player.location.adjacent_locations):
+                        if not player.move_cooldown:
+                            await location.player_enter(player)
+                            player.move_cooldown = True
+                            await asyncio.sleep(location.cooldown)
+                            player.move_cooldown = False
+                        else:
+                            await bot.say("%s gasps for air!"%(player.name))
                     else:
-                        await bot.say("%s gasps for air!"%(player.name))
+                        await bot.say("That location is not adjacent to your current location!")
         else:
             await bot.say("You can't do that now, %s!"%ctx.message.author.mention)
 

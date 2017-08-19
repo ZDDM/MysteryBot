@@ -19,15 +19,75 @@ class Game():
         self.observers = []
         self.murderers = []
 
+        self.channel_prefix = "mystery_"
+
         self.player_role = None
         self.observer_role = None
         self.dead_role = None
 
-        self.locations = {"1" : Location(self, name="Dev Room 1", topic="It's", description="A dev room... Spooky!"),
-                          "2" : Location(self, name="Dev Room 2", topic="The", description="This room, ah yes... This room. It makes you feel relaxed"),
-                          "3" : Location(self, name="Dev Room 3", topic="Nutshack", description="This room is quite boring... There's nothing special here.")}
+
+
+        self.locations = self.map_rokkenjima()
 
         self.channel = None
+
+    def map_rokkenjima(self):
+
+        channel_prefix = "rokkenjima_"
+
+        pier = Location(self, name="pier", topic="A small pier where boats come by")
+        rose_garden = Location(self, name="rose_garden", topic="A beautiful rose garden")
+        tool_shed = Location(self, name="tool_shed", topic="A shed for storing various gardening tools")
+        forest1 = Location(self, name="forest1", topic="Full of trees...")
+        forest2 = Location(self, name="forest2", topic="Like, REALLY full of trees...")
+        kuwadorian = Location(self, name="kuwadorian", topic="A beautiful mansion inside the forest")
+        guest_house_1f = Location(self, name="guest_house_1f", topic="First floor of the guest house")
+        guest_house_parlor = Location(self, name="parlor", topic="A rustical chamber with a bar for the guests")
+        guest_house_archive = Location(self, name="archive", topic="Holds a small but a wide collection of books")
+        guest_house_2f = Location(self, name="guest_house_2f", topic="Second floor of the guest house")
+        guest_house_bedroom = Location(self, name="guest_house_bedroom", topic="An elegant guest room with a few beds")
+        mansion_entrance = Location(self, name="mansion_entrance", topic="I wonder how the mansion looks on the inside...")
+        mansion_1f = Location(self, name="mansion_1f", topic="First floor of the guest house. The portrait of a beautiful witch can be seen on the wall...")
+        mansion_dining_room = Location(self, name="dining_room", topic="A big but elegant dining room")
+        mansion_kitchen = Location(self, name="kitchen", topic="It looks like the kitchen from some restaurant...")
+        mansion_2f = Location(self, name="mansion_2f", topic="Second floor of the mansion")
+        mansion_bedroom = Location(self, name="mansion_bedroom", topic="A luxurious bedroom with a large bed")
+        mansion_bathroom = Location(self, name="mansion_bathroom", topic="It's just a bathroom. You can't fit through the sink, though!")
+        mansion_3f = Location(self, name="mansion_3f", topic="Third and last floor of the mansion")
+        mansion_study = Location(self, name="mansion_study", topic="An apartment-sized study")
+        mansion_study_kitchen = Location(self, name="mansion_study_kitchen", topic="An ordinary kitchen")
+        mansion_study_bathroom = Location(self, name="mansion_study_bathroom", topic="Just a bathroom...")
+
+        pier.add_adjacent_location(rose_garden)
+        rose_garden.add_adjacent_location(tool_shed)
+        rose_garden.add_adjacent_location(forest1)
+        tool_shed.add_adjacent_location(forest1)
+        rose_garden.add_adjacent_location(guest_house_1f)
+        rose_garden.add_adjacent_location(mansion_entrance)
+        forest1.add_adjacent_location(forest2)
+        forest2.add_adjacent_location(kuwadorian)
+        kuwadorian.add_adjacent_location(pier, one_way=True)
+        guest_house_1f.add_adjacent_location(guest_house_parlor)
+        guest_house_1f.add_adjacent_location(guest_house_archive)
+        guest_house_1f.add_adjacent_location(guest_house_2f)
+        guest_house_2f.add_adjacent_location(guest_house_bedroom)
+        mansion_entrance.add_adjacent_location(mansion_1f)
+        mansion_1f.add_adjacent_location(mansion_kitchen)
+        mansion_1f.add_adjacent_location(mansion_dining_room)
+        mansion_1f.add_adjacent_location(mansion_2f)
+        mansion_2f.add_adjacent_location(mansion_bedroom)
+        mansion_bedroom.add_adjacent_location(mansion_bathroom)
+        mansion_2f.add_adjacent_location(mansion_3f)
+        mansion_3f.add_adjacent_location(mansion_study)
+        mansion_study.add_adjacent_location(mansion_study_kitchen)
+        mansion_study.add_adjacent_location(mansion_study_bathroom)
+        mansion_study_kitchen.add_adjacent_location(mansion_study_bathroom)
+
+        locations = [pier, rose_garden, tool_shed, forest1, forest2, kuwadorian, guest_house_1f, guest_house_parlor,\
+                     guest_house_archive, guest_house_2f, guest_house_bedroom, mansion_entrance, mansion_1f, mansion_2f,\
+                     mansion_bedroom, mansion_bathroom, mansion_3f, mansion_study, mansion_study_kitchen, mansion_study_bathroom]
+
+        return locations
 
     async def prepare(self):
         self.player_role = await self.bot.create_role(self.server, name="Mystery Player")
@@ -39,13 +99,13 @@ class Game():
         observer_perm = discord.ChannelPermissions(target=self.observer_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=False))
         dead_perm = discord.ChannelPermissions(target=self.dead_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=True))
 
-        self.channel = await self.bot.create_channel(self.server, "mystery_lobby", everyone_perm, player_perm, observer_perm, dead_perm)
+        self.channel = await self.bot.create_channel(self.server, "%slobby"%(self.channel_prefix), everyone_perm, player_perm, observer_perm, dead_perm)
 
         await self.bot.edit_channel(self.channel, topic="Mystery game lobby.")
 
         self.game_state = self.STATE_LOBBY
 
-        for location in self.locations.values():
+        for location in self.locations:
             await location.start()
 
     async def start(self, timer):
@@ -77,14 +137,14 @@ class Game():
 
         for player in self.players:
             random.seed()
-            await list(self.locations.values())[random.randint(0, len(self.locations) - 1)].player_enter(player)
+            await self.locations[random.randint(0, len(self.locations) - 1)].player_enter(player)
 
     async def stop(self):
         await self.bot.delete_role(self.server, self.player_role)
         await self.bot.delete_role(self.server, self.observer_role)
         await self.bot.delete_role(self.server, self.dead_role)
         await self.bot.delete_channel(self.channel)
-        for location in list(self.locations.values()):
+        for location in self.locations:
             await location.delete()
 
     async def add_player(self, user):
@@ -370,17 +430,20 @@ class Furniture():
         return False
 
 class Location():
-    def __init__(self, game, name, topic="", description=""):
+    def __init__(self, game, name, topic="", description="", cooldown=3):
         self.game = game
         self.name = name.replace(" ", "_")
         self.role = None
         self.topic = topic
+        self.cooldown = cooldown
 
         self.description = description
 
         self.players = [] # Players in this location.
         self.items = [] # Items in this location.
         self.furniture = [] # Furniture in this location
+
+        self.adjacent_locations = []
 
         self.channel = None
         # self.on_message = self.game.bot.event(self.on_message)
@@ -395,8 +458,15 @@ class Location():
         observer_perm = discord.ChannelPermissions(target=self.game.observer_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=False, read_message_history=True))
         dead_perm = discord.ChannelPermissions(target=self.game.dead_role, overwrite=discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False))
 
-        self.channel = await self.game.bot.create_channel(self.game.server, "mystery_%s"%self.name, everyone_perm, role_perm, observer_perm, dead_perm)
+        self.channel = await self.game.bot.create_channel(self.game.server, "%s%s"%(self.game.channel_prefix, self.name), everyone_perm, role_perm, observer_perm, dead_perm)
         await self.game.bot.edit_channel(self.channel, topic=self.topic)
+
+    def add_adjacent_location(self, location, one_way=False):
+        assert isinstance(location, Location)
+        if location not in self.adjacent_locations:
+            self.adjacent_locations.append(location)
+            if self not in location.adjacent_locations and not one_way:
+                location.adjacent_locations.append(self)
 
     def add_item(self, item):
         if item not in self.items:
