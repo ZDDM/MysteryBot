@@ -33,7 +33,12 @@ class Game():
 
         channel_prefix = "dev_"
 
-        devroom1 = Location(self, name="devroom1", topic="OH NO, A DEV ROOM", items=[Item(name="Tears", description="Solidified tears from a coder.", is_bloody=True)])
+        chest = Furniture(name="chest", description="A chest forged from zeros and ones.", \
+                          contents=[Item(name="Useless junk", description="Totally useless..."), \
+                          Weapon(name="Toolbox", description="ROBUST!", robustness=30)], \
+                          random_content=[(Weapon(name="Legendary bike horn", description="Used by a clown living inside a space station... Cool, eh?"),1/3)])
+
+        devroom1 = Location(self, name="devroom1", topic="OH NO, A DEV ROOM", items=[Item(name="Tears", description="Solidified tears from a coder.", is_bloody=True)], furniture=[chest])
         devroom2 = Location(self, name="devroom2", topic="Oh hey, it's a dev room.", items=[Weapon(name="Billhook", description="Popularized by teenage girls.", robustness=20)])
 
         devroom1.add_adjacent_location(devroom2)
@@ -425,7 +430,7 @@ class Furniture():
             return "There is a %s! "%(self.name.lower())
 
     def open(self):
-        for item in contents:
+        for item in self.contents:
             self.parent.add_item(item)
 
     def examine_contents(self):
@@ -435,7 +440,7 @@ class Furniture():
         return contentstr
 
     def add_item(self, item):
-        if item not in self.items:
+        if item not in self.contents:
             if isinstance(item.parent, Player) or isinstance(item.parent, Location):
                 item.parent.remove_item(item)
             self.contents.append(item)
@@ -482,7 +487,7 @@ class Location():
         for item in items:
             self.add_item(item)
 
-        for furniture, chance in furniture:
+        for furniture, chance in random_furniture:
             random.seed()
             if random.random() < chance:
                 self.add_furniture(furniture)
@@ -529,8 +534,8 @@ class Location():
 
     def add_furniture(self, furniture):
         if furniture not in self.furniture:
-            if isinstance(item.parent, Location):
-                item.parent.remove_furniture(item)
+            if isinstance(furniture.parent, Location):
+                furniture.parent.remove_furniture(item)
             self.furniture.append(furniture)
             furniture.parent = self
 
