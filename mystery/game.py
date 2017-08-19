@@ -440,7 +440,7 @@ class Furniture():
         return False
 
 class Location():
-    def __init__(self, game, name, topic="", description="", cooldown=3):
+    def __init__(self, game, name, topic="", description="", items=[], random_items=[], cooldown=3):
         self.game = game
         self.name = name.replace(" ", "_")
         self.role = None
@@ -457,7 +457,13 @@ class Location():
 
         self.channel = None
 
-        self.add_item(Weapon("knife", "DEADLY", 20))
+        for item, chance in random_items:
+            random.seed()
+            if random.random() < chance:
+                self.add_item(item)
+
+        for item in items:
+            self.add_item(item)
 
     async def start(self):
         self.role = await self.game.bot.create_role(self.game.server, name="Location")
