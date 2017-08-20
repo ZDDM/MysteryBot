@@ -9,6 +9,11 @@ description = """Murder everyone!"""
 token = os.environ["MysteryToken"]
 game = None
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), description=description)
+__version__ = "v0.1.0"
+
+@bot.command(description="Returns the version of the bot")
+async def version():
+    await bot.say("```MysteryBot version %s```" %(__version__))
 
 @bot.command(description="Creates a game instance", pass_context=True)
 async def create_game(ctx, timer : int = 45):
