@@ -39,6 +39,8 @@ class Game():
         self.observer_role = None
         self.dead_role = None
 
+        self.loop_task = None
+
         self.locations = self.map_rokkenjima()
 
         self.channel = None
@@ -167,6 +169,8 @@ class Game():
         em = discord.Embed(title="Murderers", description=murderer_list, colour=0xff5555)
         em.set_footer(text="Know your \"friends\"...")
 
+        self.loop_task = self.bot.loop.create_task(self.game_loop())
+
         for i in self.murderers:
             await self.bot.send_message(i.user, embed=em)
 
@@ -175,12 +179,7 @@ class Game():
             await self.locations[random.randint(0, len(self.locations) - 1)].player_enter(player)
 
     async def stop(self):
-        await self.bot.delete_role(self.server, self.player_role)
-        await self.bot.delete_role(self.server, self.observer_role)
-        await self.bot.delete_role(self.server, self.dead_role)
-        await self.bot.delete_channel(self.channel)
-        for location in self.locations:
-            await location.delete()
+        await self.delete()
 
     async def add_player(self, user):
         if self.game_state == self.STATE_LOBBY:
@@ -244,6 +243,64 @@ class Game():
             if location.name == loc:
                 return location
         return False
+
+    async def end_game(self):
+        self.game_state = self.STATE_END
+        await self.bot.edit_channel_permissions(self.channel, target=self.player_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=True))
+        await self.bot.send_message(self.channel, "The game has ended! @everyone")
+        await asyncio.sleep(5)
+        rolestring = ""
+        for player in self.players:
+            await self.bot.remove_roles(player.member, player.location.role)
+            if player.role == Player.ROLE_NONE:
+                rolestring += "%s was an innocent bystander! "%(player.user.mention)
+            elif player.role == Player.ROLE_MURDERER:
+                rolestring += "%s was a murderer! "%(player.user.mention)
+            if player.is_dead:
+                rolestring += "%s didn't survive the events.\n"%(player.name)
+            else:
+                rolestring += "%s survived the events!\n"%(player.name)
+        em = discord.Embed(title="Roles", description=rolestring, color=0xf0f8ff)
+        await self.bot.send_message(self.channel, embed=em)
+        await self.bot.send_message(self.channel, "The game will be stopped in 60 seconds...")
+        await asyncio.sleep(60)
+        await self.stop()
+
+    async def game_loop(self):
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed and self.game_state != self.STATE_END:
+            end_game = False
+            alive_murderers = 0
+            alive_bystanders = 0
+            for murderer in self.murderers:
+                if not murderer.is_dead:
+                    alive_murderers += 1
+            for player in self.players:
+                if not player.role == Player.ROLE_MURDERER and not player.is_dead:
+                    alive_bystanders += 1
+            if (not alive_murderers and alive_bystanders) or (alive_murderers and not alive_bystanders) or (not alive_murderers and not alive_bystanders):
+                end_game = True
+            if end_game:
+                await self.end_game()
+                self.loop_task.cancel()
+            else:
+                await asyncio.sleep(1) # Runs every second.
+
+    async def delete(self):
+        if self.cleanup_function:
+            self.cleanup_function()
+        await self.bot.delete_role(self.server, self.player_role)
+        await self.bot.delete_role(self.server, self.observer_role)
+        await self.bot.delete_role(self.server, self.dead_role)
+        await self.bot.delete_channel(self.channel)
+        for player in self.players:
+            await player.delete()
+        for player in self.observers:
+            await player.delete()
+        for item in list(self.weapon_database.values()):
+            await item.delete()
+        for location in self.locations:
+            await location.delete()
 
 class Player():
 
@@ -388,6 +445,17 @@ class Player():
             examined += "%s is holding %s %s. \n"%(self.name, self.equipped_item.indef_article(), self.equipped_item.name())
         return examined
 
+    async def delete(self):
+        self.killed_by = None
+        self.game = None
+        self.equipped_item = None
+        if self.location:
+            await self.location.player_leave(self, message=False)
+        self.user = None
+        self.member = None
+        for item in self.inventory:
+            self.remove_item(item)
+            await item.delete()
 class Item():
     def __init__(self, name="Unknown", description="Unknown item.", is_bloody=False):
         self._name = name
@@ -422,6 +490,9 @@ class Item():
             return "There is %s %s on the ground! "%(self.indef_article(), self.name().lower())
         elif isinstance(self.parent, Furniture):
             return "There is %s %s inside the %s! "%(self.indef_article(), self.name().lower(), self.parent.name.lower())
+
+    async def delete(self):
+        self.parent = None
 
 class Usable(Item):
     async def use(self):
@@ -482,6 +553,11 @@ class Furniture():
             if mitem._name.lower() == item.lower():
                 return mitem
         return False
+
+    async def delete(self):
+        for item in self.contents:
+            self.remove_item(item)
+            await item.delete()
 
 class Location():
     def __init__(self, game, name, topic="", description="", items=[], random_items=[], furniture=[], random_furniture=[], cooldown=3):
@@ -577,21 +653,23 @@ class Location():
                 return mfurniture
         return False
 
-    async def player_enter(self, player):
+    async def player_enter(self, player, message=True):
         if player.is_observer:
             return False
         if not (player in self.players):
             await self.game.bot.add_roles(player.member, self.role)
-            await self.game.bot.send_message(self.channel, "%s enters." %(player.user.mention))
+            if message:
+                await self.game.bot.send_message(self.channel, "%s enters." %(player.user.mention))
             if player.location:
                 await player.location.player_leave(player)
             player.location = self
             self.players.append(player)
             return True
 
-    async def player_leave(self, player):
+    async def player_leave(self, player, message=True):
         if player in self.players:
-            await self.game.bot.send_message(self.channel, "%s leaves." %(player.user.mention))
+            if message:
+                await self.game.bot.send_message(self.channel, "%s leaves." %(player.user.mention))
             await self.game.bot.remove_roles(player.member, self.role)
             if player.location == self:
                 player.location = None
@@ -600,6 +678,12 @@ class Location():
     async def delete(self):
         await self.game.bot.delete_channel(self.channel)
         await self.game.bot.delete_role(self.game.server, self.role)
+        self.adjacent_locations = None
+        for item in self.items:
+            self.remove_item(item)
+        for furniture in self.furniture:
+            self.remove_furniture(furniture)
+            await furniture.delete()
 
     def examine(self):
         examined = {"players" : "", "furniture" : "", "items" : "", "location" : self.description}
