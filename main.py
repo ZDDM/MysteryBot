@@ -11,12 +11,14 @@ game = None
 bot = commands.Bot(command_prefix=commands.when_mentioned_or('>'), description=description)
 __version__ = "v0.1.0"
 
-@bot.command(description="Returns the version of the bot")
+@bot.command(description="Returns the version of the bot.")
 async def version():
+    '''Returns the version of the bot.'''
     await bot.say("```MysteryBot version %s```" %(__version__))
 
-@bot.command(description="Creates a game instance", pass_context=True)
+@bot.command(description="Creates a game instance. The argument time is how much the bot will wait before starting the game.", pass_context=True)
 async def create_game(ctx, timer : int = 45):
+    '''Create a new instance of the game if one isn't running already. Takes a "time" argument.'''
     if timer >= 15:
         global game
         if game == None and ctx.message.server:
@@ -35,8 +37,9 @@ async def create_game(ctx, timer : int = 45):
     else:
         await bot.say("That's too low! Try setting the timer to be higher than 15 seconds")
 
-@bot.command(description="Stops a game instance", pass_context=True)
+@bot.command(description="Stops a game instance, allowing you to create a new one.", pass_context=True)
 async def stop(ctx):
+    '''Ends the current game.'''
     global game
     if game:
         if game.game_state == game.STATE_GAME:
@@ -46,6 +49,7 @@ async def stop(ctx):
 
 @bot.command(description="Join the game", pass_context=True)
 async def join(ctx):
+    '''Allows you to join a game instance as a player.'''
     if game:
         code = await game.add_player(ctx.message.author)
         if not code:
@@ -53,16 +57,19 @@ async def join(ctx):
 
 @bot.command(description="Observe the game", pass_context=True)
 async def observe(ctx):
+    '''Allows you to join a game instance as an observer.'''
     if game:
         await game.add_observer(ctx.message.author)
 
 @bot.command(description="Leave the game", pass_context=True)
 async def leave(ctx):
+    '''Allows you to leave the game if it hasn't started already.'''
     if game:
         await game.remove_player(ctx.message.author)
 
 @bot.command(description="Get a list of locations at reach", pass_context=True)
 async def locations(ctx):
+    '''Returns a list of locations you can move to right now.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -77,6 +84,7 @@ async def locations(ctx):
 
 @bot.command(description="Move to another location", pass_context=True)
 async def move(ctx, location : str):
+    '''Allows you to move to an adjacent location.'''
     if game:
         if game.game_state == game.STATE_GAME:
             location = game.find_location(location)
@@ -98,6 +106,7 @@ async def move(ctx, location : str):
 
 @bot.command(description="Examines the room you're in.", pass_context=True)
 async def look(ctx):
+    '''Returns information about the room, the people in it... Takes no arguments'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -122,6 +131,7 @@ async def look(ctx):
 
 @bot.command(description="Use the item you've equipped. If it's a weapon, you can commit suicide by using it.", pass_context=True)
 async def use(ctx):
+    '''Allows you to use an item in your inventory.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -135,6 +145,7 @@ async def use(ctx):
 
 @bot.command(description="Sends you a private message with the contents of your inventory.", pass_context=True)
 async def inventory(ctx):
+    '''Returns information about all the items in your inventory'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -149,6 +160,7 @@ async def inventory(ctx):
 
 @bot.command(description="Picks up an item from the location you're in.", pass_context=True)
 async def pickup(ctx, item : str):
+    '''Allows you to pick up an item from your current location.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -163,6 +175,7 @@ async def pickup(ctx, item : str):
 
 @bot.command(description="Drops an item to the location you're in.", pass_context=True)
 async def drop(ctx, item : str):
+    '''Allows you to drop an item.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -177,6 +190,7 @@ async def drop(ctx, item : str):
 
 @bot.command(description="Equips an item from your inventory.", pass_context=True)
 async def equip(ctx, item : str):
+    '''Allows you to equip an item from your inventory.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -192,8 +206,23 @@ async def equip(ctx, item : str):
                     else:
                         await bot.say("There's no such item in your inventory.")
 
+@bot.command(description="Unequips an item from your inventory.", pass_context=True)
+async def unequip(ctx):
+    '''Allows you to unequip the item you are holding.'''
+    if game:
+        if game.game_state == game.STATE_GAME:
+            player = game.find_by_user(ctx.message.author)
+            if player:
+                if not player.is_observer and not player.is_dead:
+                    if player.equipped_item:
+                        await bot.say("%s stores their %s in their inventory."%(player.user.mention, player.equipped_item.name()))
+                        player.equipped_item = None
+                    else:
+                        await bot.say("%s tries to store their hands in their inventory! ...Until they realize that's not possible."%(player.user.mention))
+
 @bot.command(description="Attacks another person in your location. If you don't have a weapon equipped, you'll attack them with your fists!", pass_context=True)
 async def attack(ctx, who : discord.Member):
+    '''Allows you to attack a person in your location.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -241,6 +270,7 @@ async def attack(ctx, who : discord.Member):
 
 @bot.command(description="Dumps the contents of a furniture to the floor.", pass_context=True)
 async def dump(ctx, furniture : str):
+    '''Dumps the contents of a furniture in your location.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -255,6 +285,7 @@ async def dump(ctx, furniture : str):
 
 @bot.command(description="Stores an item from your inventory inside a furniture in your location.", pass_context=True)
 async def store(ctx, item : str, furniture : str):
+    '''Allows you to store an item from your inventory inside a furniture in your location.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -273,6 +304,7 @@ async def store(ctx, item : str, furniture : str):
 
 @bot.command(description="Picks up an item from a container.", pass_context=True)
 async def pick_from(ctx, furniture : str, item : str):
+    '''Allows you to pick up an item from a container.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
@@ -291,6 +323,7 @@ async def pick_from(ctx, furniture : str, item : str):
 
 @bot.command(description="Examines a furniture from your location.", pass_context=True)
 async def look_inside(ctx, furniture : str):
+    '''Returns information about the contents of a furniture in your location.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
