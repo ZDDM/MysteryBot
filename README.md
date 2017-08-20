@@ -1,7 +1,5 @@
 # MysteryBot
 
------
-
 MysteryBot uses [discord.py](https://github.com/Rapptz/discord.py) and [Python 3.6](https://www.python.org/downloads/) to work correctly. 
 
 -----
