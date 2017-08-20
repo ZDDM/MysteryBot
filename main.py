@@ -302,9 +302,9 @@ async def store(ctx, item : str, furniture : str):
                 else:
                     await bot.say("There's no such item in your inventory.")
 
-@bot.command(description="Picks up an item from a container.", pass_context=True)
-async def pick_from(ctx, furniture : str, item : str):
-    '''Allows you to pick up an item from a container.'''
+@bot.command(description="Takes an item from a container.", pass_context=True)
+async def take_from(ctx, furniture : str, item : str):
+    '''Allows you to take an item from a container.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
