@@ -390,7 +390,7 @@ class Player():
         if random.randint(0, 1):
             player.is_bloody = True
         if self.equipped_a_weapon():
-            self.equipped_item.on_attack(player)
+            await self.equipped_item.on_attack(player)
             if random.randint(0, 1):
                 self.equipped_item.is_bloody = True
         if player.health <= 0:
