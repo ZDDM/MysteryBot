@@ -155,8 +155,9 @@ class Game():
         await self.bot.edit_channel(self.channel, topic="Mystery game lobby. The game has already started! You can discuss it here.")
         await self.bot.edit_channel_permissions(self.channel, target=self.player_role, overwrite=discord.PermissionOverwrite(read_messages=False, send_messages=False))
         await self.bot.edit_channel_permissions(self.channel, target=self.observer_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=True))
-        # murderer_number = int(len(self.players) / 3)
-        murderer_number = 1 # Only one for debug purposes
+        murderer_number = int(len(self.players) / 3)
+        if not murderer_number:
+            murderer_number = 1
         murderer_list = ""
         random.seed()
         sample = random.sample(range(len(self.players)), murderer_number)
