@@ -11,9 +11,11 @@ class Game():
     STATE_GAME = 1
     STATE_END = 2
 
-    def __init__(self, bot, server):
+    def __init__(self, bot, server, cleanup_function=None):
         self.bot = bot
         self.server = server
+
+        self.cleanup_function = cleanup_function
 
         self.game_state = self.STATE_PREPARE
         self.players = []

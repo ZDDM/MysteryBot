@@ -16,7 +16,7 @@ async def create_game(ctx, timer : int = 45):
         global game
         if game == None and ctx.message.server:
             await bot.say("%s created a game! Preparing game instance..." %(ctx.message.author.mention))
-            game = Game(bot, ctx.message.server)
+            game = Game(bot, ctx.message.server, cleanup_game)
             await game.prepare()
             await game.add_player(ctx.message.author)
             await bot.say("You can join the game now using >join or observe using >observe!")
@@ -32,8 +32,12 @@ async def create_game(ctx, timer : int = 45):
 
 @bot.command(description="Stops a game instance", pass_context=True)
 async def stop(ctx):
-    await bot.say("Stopping game!")
-    await game.stop()
+    global game
+    if game:
+        if game.game_state == game.STATE_GAME:
+            await bot.say("Stopping game!")
+            await game.end_game()
+            game = None
 
 @bot.command(description="Join the game", pass_context=True)
 async def join(ctx):
@@ -295,6 +299,10 @@ async def look_inside(ctx, furniture : str):
                         await bot.send_message(player.user, embed=em)
                 else:
                     await bot.say("There's no such furniture in your location.")
+
+def cleanup_game():
+    global game
+    game = None
 
 if __name__ == "__main__":
     bot.run(token)
