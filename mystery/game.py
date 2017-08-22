@@ -22,6 +22,9 @@ class Game():
         self.observers = []
         self.murderers = []
 
+        self.item_database = {"band aid" : HealItem(name="band aid", description="Used for non-serious injuries", heal=5),
+                              "bandage" : HealItem(name="bandage", description="A bandage made out of cotton", heal=20),
+                              "first aid kit" : HealItem(name="first aid kit", description="Collection of supplies and equipment that is used to give medical treatment", heal=40)}
         self.weapon_database = {"book" : Weapon(name="book", description="Bust someone's head with it! Still better than your fists", robustness=7),
                                 "branch" : Weapon(name="branch", description="A branch from a tree. Better than using your fists!", robustness=8),
                                 "knife" : Weapon(name="knife", description="A kitchen knife", robustness=10),
@@ -40,6 +43,8 @@ class Game():
         self.dead_role = None
 
         self.loop_task = None
+
+        self.debug = True
 
         self.locations = self.map_rokkenjima()
 
@@ -71,6 +76,7 @@ class Game():
         locker = Furniture(name="locker", description="A person could fit in, maybe...", random_content=[(copy(self.weapon_database["baseball bat"]), 1/3)])
         shelf = Furniture(name="shelf", description="Just a shelf", random_content=[(copy(self.weapon_database["book"]),1/3)])
         crate = Furniture(name="crate", description="It's a crate! Oh no!", random_content=[(copy(self.weapon_database["katana"]), 1/6)])
+        medical_closet = Furniture(name="closet", description="A closet with a green cross on it", random_content=[(copy(self.item_database["first aid kit"]),  1/4), (copy(self.item_database["first aid kit"]),  1/4), (copy(self.item_database["bandage"]), 1/3), (copy(self.item_database["bandage"]), 1/3), (copy(self.item_database["band aid"]), 1/2), (copy(self.item_database["band aid"]), 1/2)])
 
         pier = Location(self, name="pier", topic="A small pier where boats come by", furniture=[copy(crate)])
         rose_garden = Location(self, name="rose_garden", topic="A beautiful rose garden")
@@ -86,14 +92,14 @@ class Game():
         mansion_entrance = Location(self, name="mansion_entrance", topic="I wonder how the mansion looks on the inside...")
         mansion_1f = Location(self, name="mansion_1f", topic="First floor of the guest house. The portrait of a beautiful witch can be seen on the wall...")
         mansion_dining_room = Location(self, name="dining_room", topic="A big but elegant dining room")
-        mansion_kitchen = Location(self, name="kitchen", topic="It looks like the kitchen from some restaurant...", furniture=[copy(closet), copy(locker)], items=[copy(self.weapon_database["knife"])])
+        mansion_kitchen = Location(self, name="kitchen", topic="It looks like the kitchen from some restaurant...", furniture=[copy(closet), copy(locker), copy(medical_closet)], items=[copy(self.weapon_database["knife"])])
         mansion_2f = Location(self, name="mansion_2f", topic="Second floor of the mansion", items=[copy(self.weapon_database["book"])])
         mansion_bedroom = Location(self, name="mansion_bedroom", topic="A luxurious bedroom with a large bed", furniture=[copy(closet)])
-        mansion_bathroom = Location(self, name="mansion_bathroom", topic="It's just a bathroom. You can't fit through the sink, though!", furniture=[copy(locker)])
+        mansion_bathroom = Location(self, name="mansion_bathroom", topic="It's just a bathroom. You can't fit through the sink, though!", furniture=[copy(locker), copy(medical_closet)])
         mansion_3f = Location(self, name="mansion_3f", topic="Third and last floor of the mansion")
         mansion_study = Location(self, name="mansion_study", topic="An apartment-sized study", furniture=[copy(closet), copy(shelf), copy(locker)], random_items=[(copy(self.weapon_database["winchester"]), 1/3)])
         mansion_study_kitchen = Location(self, name="mansion_study_kitchen", topic="An ordinary kitchen", items=[copy(self.weapon_database["knife"])])
-        mansion_study_bathroom = Location(self, name="mansion_study_bathroom", topic="Just a bathroom...")
+        mansion_study_bathroom = Location(self, name="mansion_study_bathroom", topic="Just a bathroom...", furniture=[copy(medical_closet)])
 
         pier.add_adjacent_location(rose_garden)
         rose_garden.add_adjacent_location(tool_shed)
@@ -281,7 +287,7 @@ class Game():
                     alive_bystanders += 1
             if (not alive_murderers and alive_bystanders) or (alive_murderers and not alive_bystanders) or (not alive_murderers and not alive_bystanders):
                 end_game = True
-            if end_game:
+            if end_game and not debug:
                 await self.end_game()
                 self.loop_task.cancel()
             else:
@@ -397,6 +403,11 @@ class Player():
             player.health = 0
             player.is_bloody = True
 
+    def heal(self, hp):
+        self.health += hp
+        if self.health > 100:
+            self.health = 100
+
     def add_item(self, item):
         if item not in self.inventory:
             if isinstance(item.parent, Player) or isinstance(item.parent, Location):
@@ -507,6 +518,21 @@ class Weapon(Usable):
 
     async def on_attack(self, other):
         pass
+
+class HealItem(Usable):
+    def __init__(self, name="Unknown", description="Unknown heal item.", is_bloody=False, heal=15):
+        super(HealItem, self).__init__(name, description, is_bloody)
+        self.heal = heal
+
+    async def use(self, other=None):
+        if isinstance(other, Player):
+            await self.parent.game.bot.send_message(self.parent.location.channel, "%s heals %s using the %s"%(self.parent.user.mention, other.user.mention, self.name))
+            other.heal(self.heal)
+            await self.delete()
+        else:
+            await self.parent.game.bot.send_message(self.parent.location.channel, "%s heals themself using the %s"%(self.parent.user.mention, self.name))
+            self.parent.heal(self.heal)
+            await self.delete()
 
 class Furniture():
     def __init__(self, name="", description="", contents=[], random_content=[]):
