@@ -134,19 +134,22 @@ async def look(ctx):
                     await bot.send_message(player.user, embed=emitem)
                     await bot.send_message(player.user, "-----------------------------------")
 
-@bot.command(description="Use the item you've equipped. If it's a weapon, you can commit suicide by using it.", pass_context=True)
-async def use(ctx):
+@bot.command(description="Use the item you've equipped. Pass an user as the second argument and you'll use it on them.", pass_context=True)
+async def use(ctx, item : str, other : discord.Member = None):
     '''Allows you to use an item in your inventory.'''
     if game:
         if game.game_state == game.STATE_GAME:
             player = game.find_by_user(ctx.message.author)
             if player:
+                item = player.find_item(item)
                 if not player.is_observer and not player.is_dead:
-                    if player.equipped_item:
-                        if hasattr(player.equipped_item, "use"):
-                            await player.equipped_item.use()
+                    if item:
+                        if hasattr(item, "use"):
+                            await item.use(other)
                         else:
-                            await bot.send_message(player.user, "You can't use that!")
+                            await bot.say("You can't use that item!")
+                    else:
+                        await bot.say("There's no such item!")
 
 @bot.command(description="Sends you a private message with the contents of your inventory.", pass_context=True)
 async def inventory(ctx):

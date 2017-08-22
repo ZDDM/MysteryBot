@@ -493,10 +493,11 @@ class Item():
             return "There is %s %s inside the %s! "%(self.indef_article(), self.name().lower(), self.parent.name.lower())
 
     async def delete(self):
-        self.parent = None
+        if self.parent:
+            self.parent.remove_item(self)
 
 class Usable(Item):
-    async def use(self):
+    async def use(self, other=None):
         pass
 
 class Weapon(Usable):
