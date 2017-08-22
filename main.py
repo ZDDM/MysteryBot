@@ -43,9 +43,14 @@ async def stop(ctx):
     global game
     if game:
         if game.game_state == game.STATE_GAME:
-            await bot.say("Stopping game!")
+            await bot.say("Ending game!")
             await game.end_game()
             game = None
+        elif game.game_state == game.STATE_END:
+            await bot.say("Stopping game!")
+            await game.stop()
+            game = None
+
 
 @bot.command(description="Join the game", pass_context=True)
 async def join(ctx):
