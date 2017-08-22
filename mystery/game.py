@@ -121,8 +121,8 @@ class Game():
         mansion_study_kitchen.add_adjacent_location(mansion_study_bathroom)
 
         locations = [pier, rose_garden, tool_shed, forest1, forest2, kuwadorian, guest_house_1f, guest_house_parlor,\
-                     guest_house_archive, guest_house_2f, guest_house_bedroom, mansion_entrance, mansion_1f, mansion_2f,\
-                     mansion_bedroom, mansion_bathroom, mansion_3f, mansion_study, mansion_study_kitchen, mansion_study_bathroom]
+                     guest_house_archive, guest_house_2f, guest_house_bedroom, mansion_entrance, mansion_kitchen, mansion_1f, mansion_2f,\
+                     mansion_bedroom, mansion_dining_room, mansion_bathroom, mansion_3f, mansion_study, mansion_study_kitchen, mansion_study_bathroom]
 
         return locations
 
