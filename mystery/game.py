@@ -61,8 +61,8 @@ class Game():
                           Weapon(name="Toolbox", description="ROBUST!", robustness=30)], \
                           random_content=[(Weapon(name="Legendary bike horn", description="Used by a clown living inside a space station... Cool, eh?"),1/3)])
 
-        devroom1 = Location(self, name="devroom1", topic="OH NO, A DEV ROOM", items=[Item(name="Tears", description="Solidified tears from a coder.", is_bloody=True)], furniture=[chest])
-        devroom2 = Location(self, name="devroom2", topic="Oh hey, it's a dev room.", items=[Weapon(name="Billhook", description="Popularized by teenage girls.", robustness=20)])
+        devroom1 = Location(self, name="devroom1", topic="OH NO, A DEV ROOM", items=[Item(name="Tears", description="Solidified tears from a coder.", is_bloody=True), Paper()], furniture=[chest])
+        devroom2 = Location(self, name="devroom2", topic="Oh hey, it's a dev room.", items=[Weapon(name="Billhook", description="Popularized by teenage girls.", robustness=20), Paper(), Paper(name="golden letter", description="a golden letter", text="There are murderers and such", signature="the Golden Witch")])
 
         devroom1.add_adjacent_location(devroom2)
 
@@ -80,6 +80,11 @@ class Game():
         crate = Furniture(name="crate", description="It's a crate! Oh no!", random_content=[(copy(self.weapon_database["katana"]), 1/6)])
         medical_closet = Furniture(name="closet", description="A closet with a green cross on it", random_content=[(copy(self.item_database["first aid kit"]),  1/4), (copy(self.item_database["first aid kit"]),  1/4), (copy(self.item_database["bandage"]), 1/3), (copy(self.item_database["bandage"]), 1/3), (copy(self.item_database["band aid"]), 1/2), (copy(self.item_database["band aid"]), 1/2)])
 
+        letter = Paper(name="golden letter", description="a beautiful envelope with the Ushiromiya family crest imprinted on it", signature="Beatrice the Golden", can_rename=False, \
+                       text="Welcome to Rokkenjima, everyone. I am serving Kinzo-sama as the alchemist-adviser of this house and my name is Beatrice.\n\
+                             Today, we are going to play a fun little game... There are murderers amongst you... They're driven by greed, and won't hesitate to kill.\n\
+                             Now, everyone! Have fun...")
+
         pier = Location(self, name="pier", topic="A small pier where boats come by", furniture=[copy(crate)])
         rose_garden = Location(self, name="rose_garden", topic="A beautiful rose garden")
         tool_shed = Location(self, name="tool_shed", topic="A shed for storing various gardening tools", furniture=[copy(locker), copy(shelf)], items=[copy(self.weapon_database["hatchet"])], random_items=[(copy(self.weapon_database["billhook"]), 1/2)])
@@ -93,7 +98,7 @@ class Game():
         guest_house_bedroom = Location(self, name="guest_house_bedroom", topic="An elegant guest room with a few beds", furniture=[copy(shelf)], items=[copy(self.weapon_database["baseball bat"])])
         mansion_entrance = Location(self, name="mansion_entrance", topic="I wonder how the mansion looks on the inside...")
         mansion_1f = Location(self, name="mansion_1f", topic="First floor of the guest house. The portrait of a beautiful witch can be seen on the wall...")
-        mansion_dining_room = Location(self, name="dining_room", topic="A big but elegant dining room")
+        mansion_dining_room = Location(self, name="dining_room", topic="A big but elegant dining room", items=[letter])
         mansion_kitchen = Location(self, name="kitchen", topic="It looks like the kitchen from some restaurant...", furniture=[copy(closet), copy(locker), copy(medical_closet)], items=[copy(self.weapon_database["knife"])])
         mansion_2f = Location(self, name="mansion_2f", topic="Second floor of the mansion", items=[copy(self.weapon_database["book"])])
         mansion_bedroom = Location(self, name="mansion_bedroom", topic="A luxurious bedroom with a large bed", furniture=[copy(closet)])
