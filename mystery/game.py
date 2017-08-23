@@ -44,7 +44,9 @@ class Game():
 
         self.loop_task = None
 
-        self.debug = True
+        self.debug = False
+
+        self.appear_location = False
 
         self.locations = self.map_rokkenjima()
 
