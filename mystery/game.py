@@ -130,6 +130,11 @@ class Game():
                      guest_house_archive, guest_house_2f, guest_house_bedroom, mansion_entrance, mansion_kitchen, mansion_1f, mansion_2f,\
                      mansion_bedroom, mansion_dining_room, mansion_bathroom, mansion_3f, mansion_study, mansion_study_kitchen, mansion_study_bathroom]
 
+        if random.random() < 0.5:
+            self.appear_location = mansion_dining_room # Everyone appears in the dining room
+        else:
+            self.appear_location = False # Random location for each player
+
         return locations
 
     async def prepare(self):
@@ -182,8 +187,11 @@ class Game():
             await self.bot.send_message(i.user, embed=em)
 
         for player in self.players:
-            random.seed()
-            await self.locations[random.randint(0, len(self.locations) - 1)].player_enter(player)
+            if self.appear_location:
+                await self.appear_location.player_enter(player)
+            else:
+                random.seed()
+                await self.locations[random.randint(0, len(self.locations) - 1)].player_enter(player)
 
     async def stop(self):
         await self.delete()
