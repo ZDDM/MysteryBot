@@ -508,7 +508,7 @@ class Item():
             self.parent.remove_item(self)
 
 class Usable(Item):
-    async def use(self, other=None):
+    async def use(self, *args):
         pass
 
 class Weapon(Usable):
@@ -524,15 +524,21 @@ class HealItem(Usable):
         super(HealItem, self).__init__(name, description, is_bloody)
         self.heal = heal
 
-    async def use(self, other=None):
-        if isinstance(other, Player):
-            await self.parent.game.bot.send_message(self.parent.location.channel, "%s heals %s using the %s"%(self.parent.user.mention, other.user.mention, self.name))
-            other.heal(self.heal)
-            await self.delete()
-        else:
-            await self.parent.game.bot.send_message(self.parent.location.channel, "%s heals themself using the %s"%(self.parent.user.mention, self.name))
-            self.parent.heal(self.heal)
-            await self.delete()
+    async def use(self, *args):
+        if len(args):
+            if isinstance(args[0], Player):
+                other = args[0]
+                if other.location == self.parent.location:
+                    await self.parent.game.bot.send_message(self.parent.location.channel, "%s heals %s using the %s"%(self.parent.user.mention, other.user.mention, self.name))
+                    other.heal(self.heal)
+                    await self.delete()
+                    return
+                await self.parent.game.bot.send_message(self.parent.location.channel, "That person is not here!")
+                return
+
+        await self.parent.game.bot.send_message(self.parent.location.channel, "%s heals themself using the %s"%(self.parent.user.mention, self.name))
+        self.parent.heal(self.heal)
+        await self.delete()
 
 class Furniture():
     def __init__(self, name="", description="", contents=[], random_content=[]):

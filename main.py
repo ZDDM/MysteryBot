@@ -134,8 +134,8 @@ async def look(ctx):
                     await bot.send_message(player.user, embed=emitem)
                     await bot.send_message(player.user, "-----------------------------------")
 
-@bot.command(description="Use the item you've equipped. Pass an user as the second argument and you'll use it on them.", pass_context=True)
-async def use(ctx, item : str, other : discord.Member = None):
+@bot.command(description="Use the item you've equipped. Pass an user as the second argument and if the item allows it, you'll use it on them.", pass_context=True)
+async def use(ctx, item : str, *args):
     '''Allows you to use an item in your inventory.'''
     if game:
         if game.game_state == game.STATE_GAME:
@@ -145,7 +145,7 @@ async def use(ctx, item : str, other : discord.Member = None):
                 if not player.is_observer and not player.is_dead:
                     if item:
                         if hasattr(item, "use"):
-                            await item.use(other)
+                            await item.use(*args)
                         else:
                             await bot.say("You can't use that item!")
                     else:
