@@ -550,6 +550,75 @@ class HealItem(Usable):
         self.parent.heal(self.heal)
         await self.delete()
 
+class Paper(Usable):
+    def __init__(self, name="paper", description="A blank piece of paper", text="", signature=None, can_rename=True, is_bloody=False):
+        super(Paper, self).__init__(name, description, is_bloody)
+        self.text = text
+        self.signature = signature
+        self.can_rename = can_rename
+
+    def on_write(self):
+        self._name = "unnamed paper"
+        self.description = "a piece of paper that has already been used"
+
+    async def read_paper(self):
+        await self.parent.game.bot.send_message(self.parent.user, "*---BEGIN---*")
+        await self.parent.game.bot.send_message(self.parent.user, self.text)
+        await self.parent.game.bot.send_message(self.parent.user, "*----END----*")
+        if self.signature:
+            await self.parent.game.bot.send_message(self.parent.user, "*This text has been signed by %s*"%(self.signature))
+        else:
+            await self.parent.game.bot.send_message(self.parent.user, "*This text has no signature")
+
+    async def use(self, *args):
+        if len(args):
+            if self.signature:
+                if self.can_rename:
+                    for arg in args:
+                        if isinstance(arg, discord.Member) or isinstance(arg, discord.User):
+                            await self.parent.game.bot.send_message(self.parent.location.channel, "Invalid title!")
+                            break
+                    else:
+                        await self.parent.game.bot.send_message(self.parent.location.channel, "%s writes a new title for the %s"%(self.parent.user.mention, self.name()))
+                        self._name = ""
+                        for arg in args:
+                            self._name += "%s "%(str(arg))
+                        self._name = self._name.strip()
+                        self.can_rename = False
+                else:
+                    await self.parent.game.bot.send_message(self.parent.location.channel, "Can't rename!")
+
+            else:
+                end_writting = False
+                for arg in args:
+                    if isinstance(arg, str):
+                        if "[sign]" in arg:
+                            self.signature = self.parent.user.mention
+                            arg = arg.replace("[sign]", "")
+                            end_writting = True
+                        elif "[anonsign]" in arg:
+                            self.signature = "an anonymous writer"
+                            arg = arg.replace("[anonsign]", "")
+                            end_writting = True
+                        self.text += "%s " %(arg)
+                    elif isinstance(arg, discord.Member) or isintance(arg, discord.User):
+                        self.text += "%s " %(arg.mention)
+                    else:
+                        try:
+                            arg = str(arg)
+                            self.text += "%s " %(arg)
+                        except:
+                            pass
+                if end_writting:
+                    await self.parent.game.bot.send_message(self.parent.location.channel, "%s writes on the %s and signs it. Now it's just missing a title!" %(self.parent.user.mention, self.name()))
+                    self.on_write()
+                else:
+                    await self.parent.game.bot.send_message(self.parent.location.channel, "%s writes on the %s"%(self.parent.user.mention, self.name()))
+        else:
+            await self.read_paper()
+
+
+
 class Furniture():
     def __init__(self, name="", description="", contents=[], random_content=[]):
         '''contents uses object instances.
