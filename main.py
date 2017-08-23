@@ -162,7 +162,7 @@ async def inventory(ctx):
                     if len(player.inventory):
                         invcont = ""
                         for item in player.inventory:
-                            invcont += "%s \n"%(item._name)
+                            invcont += "__%s__ - %s\n"%(item._name, item.examine())
                         em = discord.Embed(title="Inventory", description=invcont, colour=0x6699bb)
                         await bot.send_message(player.user, embed=em)
 
