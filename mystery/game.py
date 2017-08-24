@@ -619,6 +619,7 @@ class Paper(Usable):
                     await self.parent.game.bot.send_message(self.parent.location.channel, "%s writes on the %s and signs it. Now it's just missing a title!" %(self.parent.user.mention, self.name()))
                     self.on_write()
                 else:
+                    self.text += "\n"
                     await self.parent.game.bot.send_message(self.parent.location.channel, "%s writes on the %s"%(self.parent.user.mention, self.name()))
         else:
             await self.read_paper()
