@@ -24,7 +24,8 @@ class Game():
 
         self.item_database = {"band aid" : HealItem(name="band aid", description="Used for non-serious injuries", heal=5),
                               "bandage" : HealItem(name="bandage", description="A bandage made out of cotton", heal=20),
-                              "first aid kit" : HealItem(name="first aid kit", description="Collection of supplies and equipment that is used to give medical treatment", heal=40)}
+                              "first aid kit" : HealItem(name="first aid kit", description="Collection of supplies and equipment that is used to give medical treatment", heal=40),
+                              "paper" : Paper()}
         self.weapon_database = {"book" : Weapon(name="book", description="Bust someone's head with it! Still better than your fists", robustness=7),
                                 "branch" : Weapon(name="branch", description="A branch from a tree. Better than using your fists!", robustness=8),
                                 "knife" : Weapon(name="knife", description="A kitchen knife", robustness=10),
@@ -74,9 +75,9 @@ class Game():
 
         self.channel_prefix = "rokkenjima_"
 
-        closet = Furniture(name="closet", description="Full of clothes", random_content=[(self.weapon_database["toolbox"],1/4)])
+        closet = Furniture(name="closet", description="Full of clothes", random_content=[(copy(self.weapon_database["toolbox"]), 1/4), (copy(self.item_database["paper"]), 3/4), (copy(self.item_database["paper"]), 3/4)])
         locker = Furniture(name="locker", description="A person could fit in, maybe...", random_content=[(copy(self.weapon_database["baseball bat"]), 1/3)])
-        shelf = Furniture(name="shelf", description="Just a shelf", random_content=[(copy(self.weapon_database["book"]),1/3)])
+        shelf = Furniture(name="shelf", description="Just a shelf", random_content=[(copy(self.weapon_database["book"]),1/3), (copy(self.item_database["paper"]), 3/4), (copy(self.item_database["paper"]), 3/4)])
         crate = Furniture(name="crate", description="It's a crate! Oh no!", random_content=[(copy(self.weapon_database["katana"]), 1/6)])
         medical_closet = Furniture(name="closet", description="A closet with a green cross on it", random_content=[(copy(self.item_database["first aid kit"]),  1/4), (copy(self.item_database["first aid kit"]),  1/4), (copy(self.item_database["bandage"]), 1/3), (copy(self.item_database["bandage"]), 1/3), (copy(self.item_database["band aid"]), 1/2), (copy(self.item_database["band aid"]), 1/2)])
 
