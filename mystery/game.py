@@ -427,7 +427,7 @@ class Player():
 
     def add_item(self, item):
         if item not in self.inventory:
-            if isinstance(item.parent, Player) or isinstance(item.parent, Location):
+            if isinstance(item.parent, Player) or isinstance(item.parent, Location) or isinstance(item.parent, Furniture):
                 item.parent.remove_item(item)
             self.inventory.append(item)
             item.parent = self
