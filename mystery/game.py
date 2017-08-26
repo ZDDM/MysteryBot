@@ -553,7 +553,7 @@ class HealItem(Usable):
                 await self.parent.game.bot.send_message(self.parent.location.channel, "That person is not here!")
                 return
 
-        await self.parent.game.bot.send_message(self.parent.location.channel, "%s heals themself using the %s"%(self.parent.user.mention, self.name))
+        await self.parent.game.bot.send_message(self.parent.location.channel, "%s heals themself using the %s"%(self.parent.user.mention, self.name()))
         self.parent.heal(self.heal)
         await self.delete()
 
