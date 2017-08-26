@@ -375,6 +375,7 @@ class Player():
         await self.game.bot.remove_roles(self.member, self.location.role)
         await asyncio.sleep(0.25)
         await self.game.bot.add_roles(self.member, self.game.dead_role)
+        await self.game.bot.add_roles(self.member, self.location.dead_role)
 
     async def attack(self, player):
         if not self.attack_cooldown:
@@ -689,6 +690,7 @@ class Location():
         self.game = game
         self.name = name.replace(" ", "_")
         self.role = None
+        self.dead_role = None
         self.topic = topic
         self.cooldown = cooldown
 
@@ -720,13 +722,15 @@ class Location():
 
     async def start(self):
         self.role = await self.game.bot.create_role(self.game.server, name="Location")
+        self.dead_role = await self.game.bot.create_role(self.game.server, name="Location")
 
         everyone_perm = discord.ChannelPermissions(target=self.game.server.default_role, overwrite=discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False))
         role_perm = discord.ChannelPermissions(target=self.role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=False))
         observer_perm = discord.ChannelPermissions(target=self.game.observer_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=False, read_message_history=True))
         dead_perm = discord.ChannelPermissions(target=self.game.dead_role, overwrite=discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False))
+        dead_perm2 = discord.ChannelPermissions(target=self.dead_role, overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=False, read_message_history=True))
 
-        self.channel = await self.game.bot.create_channel(self.game.server, "%s%s"%(self.game.channel_prefix, self.name), everyone_perm, role_perm, observer_perm, dead_perm)
+        self.channel = await self.game.bot.create_channel(self.game.server, "%s%s"%(self.game.channel_prefix, self.name), everyone_perm, role_perm, observer_perm, dead_perm, dead_perm2)
         await self.game.bot.edit_channel(self.channel, topic=self.topic)
 
     def add_adjacent_location(self, location, one_way=False):
