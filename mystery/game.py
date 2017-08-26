@@ -245,14 +245,15 @@ class Game():
 
     def find_by_user(self, user):
         for item in self.players:
-            if item.user == user:
+            if (item.user == user) or (item.member == user):
                 return item
         for item in self.observers:
-            if item.user == user:
+            if (item.user == user) or (item.member == user):
                 return item
         return False
 
     def find_by_member(self, member):
+        # deprecated
         for item in self.players:
             if item.member == member:
                 return item
